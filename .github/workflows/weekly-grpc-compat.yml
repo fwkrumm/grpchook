@@ -1,0 +1,75 @@
+name: Weekly gRPC Compat
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'  # Every Monday at 14:00 UTC (2 h after weekly-latest-python)
+  workflow_dispatch:  # Allow manual trigger
+
+# Only one run at a time; cancel stale in-progress run.
+concurrency:
+  group: weekly-grpc-compat
+  cancel-in-progress: true
+
+# Minimal token permissions.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: false  # disabled — enable when requirements-weekly.txt is validated
+    name: gRPC compat test (py${{ matrix.python-version }} / ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.x"]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies (wider grpc range)
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements-weekly.txt coverage
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+
+      - name: Run unit tests with coverage
+        run: |
+          python -m coverage run -m unittest discover -s tests -p "test_*.py"
+          coverage report -m
+
+  integration-test:
+    if: false  # disabled — enable when requirements-weekly.txt is validated
+    name: gRPC compat integration (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies (wider grpc range)
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements-weekly.txt
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+
+      - name: Run integration tests
+        run: python tests/integration/run_integration_tests.py

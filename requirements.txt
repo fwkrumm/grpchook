@@ -1,0 +1,6 @@
+# might depend on python version
+protobuf==6.33.5
+grpcio==1.81.0
+grpcio-tools==1.81.0
+coloredlogs>=15.0
+psutil>=5.0.0

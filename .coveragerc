@@ -1,0 +1,8 @@
+[run]
+source =
+    grpchook
+    tests
+
+[report]
+omit =
+    tests/integration/*

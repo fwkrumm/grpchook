@@ -1,0 +1,3 @@
+# ignore custom generated interface
+*.py
+*.pyi
