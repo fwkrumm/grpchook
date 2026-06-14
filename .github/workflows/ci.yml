@@ -39,7 +39,7 @@ jobs:
         run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt coverage
 
       - name: Generate proto
-        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
 
       - name: Run unit tests with coverage
         run: |
@@ -67,7 +67,7 @@ jobs:
         run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt
 
       - name: Generate proto
-        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
 
       - name: Run integration tests
         run: python tests/integration/run_integration_tests.py
@@ -93,7 +93,7 @@ jobs:
         run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt
 
       - name: Generate proto
-        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
 
       - name: Run integration tests
         run: python tests/integration/run_integration_tests.py
@@ -119,7 +119,7 @@ jobs:
         run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt
 
       - name: Generate proto
-        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
 
       - name: Run integration tests
         run: python tests/integration/run_integration_tests.py
@@ -146,7 +146,7 @@ jobs:
         run: uv pip install --system -r requirements.txt -r requirements_dev.txt
 
       - name: Generate proto
-        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. interface/message.proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
 
       - name: Run Pylint
         run: |

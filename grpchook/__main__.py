@@ -63,7 +63,7 @@ def _locate_proto() -> Path:
     Return the path to the bundled message.proto, searching in two locations:
 
     1. Inside the installed package directory (grpchook/message.proto).
-    2. The interface/ directory one level above (source tree).
+    2. The grpchook/ directory one level above (source tree).
 
     Raises FileNotFoundError if neither location contains the file.
     """
