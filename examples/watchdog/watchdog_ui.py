@@ -39,7 +39,7 @@ except ImportError:
 
 # ── platform keyboard helper ──────────────────────────────────────────────────
 if sys.platform == "win32":
-    import msvcrt
+    import msvcrt  # pylint: disable=import-error
 
     def _getch() -> str:
         """Block until a keypress, then discard any buffered repeat events.

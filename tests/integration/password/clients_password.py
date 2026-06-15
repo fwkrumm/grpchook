@@ -44,6 +44,7 @@ class PasswordClient(BaseClient):
         port: int,
         provides: list,
         requires: list,
+        *,
         password: str,
         config: ClientConfig = None,
     ):
