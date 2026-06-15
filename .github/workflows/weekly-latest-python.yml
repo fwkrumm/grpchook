@@ -72,4 +72,4 @@ jobs:
 
       - name: Run Pylint
         run: |
-          pylint baseclasses grpchook tests
+          pylint grpchook tests examples

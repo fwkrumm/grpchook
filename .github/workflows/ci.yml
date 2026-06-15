@@ -150,4 +150,4 @@ jobs:
 
       - name: Run Pylint
         run: |
-          pylint grpchook tests
+          pylint grpchook tests examples
