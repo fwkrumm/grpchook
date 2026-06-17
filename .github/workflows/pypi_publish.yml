@@ -3,7 +3,8 @@ name: Publish to PyPI
 on:
   push:
     branches:
-      - master
+      # - master # afer testing
+      - prepare_initial_version
 
 # Minimal token permissions.
 # id-token: write is required for PyPI Trusted Publishing (OIDC — no stored secrets needed).
