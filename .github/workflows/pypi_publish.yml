@@ -1,10 +1,13 @@
 name: Publish to PyPI
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches:
-      # - master # afer testing
+      # - master # after testing
       - prepare_initial_version
+    types:
+      - completed
 
 # Minimal token permissions.
 # id-token: write is required for PyPI Trusted Publishing (OIDC — no stored secrets needed).
@@ -15,6 +18,7 @@ permissions:
 jobs:
   build-and-publish:
     name: Build and publish to PyPI
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     # The 'pypi-release' environment can require manual approval before publishing.
     environment: pypi-release
     runs-on: ubuntu-latest
