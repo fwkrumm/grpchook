@@ -5,8 +5,8 @@ Python gRPC bidirectional-streaming framework. Subclass `BaseServer`/`BaseClient
 ## Layout
 
 ```
-grpchook/BaseServer.py       # server base (StreamServicer)
-grpchook/BaseClient.py       # client base
+grpchook/baseserver.py       # server base (StreamServicer)
+grpchook/baseclient.py       # client base
 grpchook/data_register.py         # server-side msg routing: messageName→clientId→queue
 grpchook/exceptions.py            # exception hierarchy
 grpchook/logger.py                # GrpcLogger + rotating file logger
@@ -34,7 +34,7 @@ Regen proto: `python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=.
 ## BaseServer — [grpchook/BaseServer.py](grpchook/BaseServer.py)
 
 ```python
-BaseServer(port, name, ip="[::]", globalExitEvent=None, ssl_credentials=None, config=None)
+BaseServer(port, name, ip="[::]" global_exit_event=None, ssl_credentials=None, config=None)
 # config = ServerConfig(max_workers, max_queue_elements, shutdown_poll_interval, server_options)
 ```
 
@@ -48,6 +48,8 @@ Schema check: reads `SCHEMA_VERSION_METADATA_KEY` from metadata → `FAILED_PREC
 | `on_init` | `()` | — |
 | `on_shutdown` | `()` | — |
 | `on_client_connect` | `(request, context)` | `bool` True=accept |
+| `on_client_accepted` | `(peer, request)` | — |
+| `on_client_disconnect` | `(peer)` | — |
 | `on_receive` | `(peer, request)` | `bool` True=fan-out |
 
 **Other:** `serve_forever()`, `shutdown()`, `_add_static_data(name, msg)`, `_get_static_data(name)`
@@ -69,9 +71,9 @@ UUID regenerated each `_setup_connection()` → prevents `DataRegister` race on 
 **Methods:**
 | Method | Purpose |
 |---|---|
-| `send_data(msg)` | validate `messageName` in `provides`, enqueue |
+| `send_data(msg, add_history=False)` | validate `messageName` in `provides`, enqueue; `add_history` appends first `DataPoint` |
 | `get_data(timeout)` | poll `receive_queue`; raises `GrpcEmpty`/`ClientExit` |
-| `wait_done()` | block until `send_queue.join()` (yielded to gRPC, not ACKed) |
+| `wait_done(additional_sleep=0.5)` | block until `send_queue.join()` + grace sleep (yielded to gRPC, not ACKed) |
 | `disconnect()` | clear `run_event`, cancel stream, close channel, join thread |
 | `spin(timeout=None)` | `get_data()` → `on_receive()`; False on timeout/disconnect |
 | `spin_forever(timeout=None)` | loop `spin()` until False |
@@ -86,9 +88,9 @@ UUID regenerated each `_setup_connection()` → prevents `DataRegister` race on 
 
 | Method | Purpose |
 |---|---|
-| `add_notification_queue_for_messageName(clientId, messageName, queue)` | subscribe |
+| `add_notification_queue_for_message_name(clientId, messageName, queue)` | subscribe |
 | `remove_notification_queues_for_client(clientId)` | deregister on disconnect |
-| `add_data_for_messageName(clientId, messageName, data, targetClientId=None)` | fan-out, skip sender; `targetClientId`=unicast |
+| `add_data_for_message_name(clientId, messageName, data, targetClientId=None)` | fan-out, skip sender; `targetClientId`=unicast |
 
 ## Exceptions — [grpchook/exceptions.py](grpchook/exceptions.py)
 

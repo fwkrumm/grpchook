@@ -59,7 +59,7 @@ class MyServer(BaseServer):
     def _handle_request(self, peer: Peer, request: message_pb2.Message):
         response = generate_message("my_response", struct_payload={"result": 42})
         # unicast back to requester only
-        self._data_register.add_data_for_messageName(
+        self._data_register.add_data_for_message_name(
             peer.client_id, "my_response", response, targetClientId=peer.client_id
         )
 
@@ -86,7 +86,7 @@ server.shutdown()        # sets exit event; serve_forever() returns
 ```python
 # push to all clients that require "my_topic"
 msg = generate_message("my_topic", struct_payload={"value": 1.0})
-self._data_register.add_data_for_messageName("", "my_topic", msg)
+self._data_register.add_data_for_message_name("", "my_topic", msg)
 # "" as clientId = no sender to skip → delivered to everyone who requires "my_topic"
 ```
 
@@ -189,9 +189,9 @@ client = MyClient(port=50051, config=ClientConfig(
 
 | Method | Signature | Purpose |
 |---|---|---|
-| `send_data` | `(msg: Message)` | Enqueue message for sending. `messageName` must be in `provides`. |
+| `send_data` | `(msg: Message, add_history=False)` | Enqueue message for sending. `messageName` must be in `provides`. `add_history` appends first `DataPoint`. |
 | `get_data` | `(timeout=None) → Message` | Poll receive queue. `None`=wait forever, `0`=non-blocking. |
-| `wait_done` | `()` | Block until all enqueued sends have been yielded to gRPC. |
+| `wait_done` | `(additional_sleep=0.5)` | Block until all enqueued sends have been yielded to gRPC. |
 | `spin` | `(timeout=None) → bool` | One `get_data` → `on_receive`. Returns `False` on timeout/disconnect. |
 | `spin_forever` | `(timeout=None)` | Loop `spin` until `False`. |
 | `disconnect` | `()` | Stop all threads, close channel. |
@@ -236,8 +236,8 @@ raw = data.payload.bytePayload             # bytes
 |---|---|
 | Fan-out to all subscribers | `on_receive()` returns `True` |
 | Drop / handle manually | `on_receive()` returns `False` |
-| Unicast to one client | `self._data_register.add_data_for_messageName(sender_id, name, msg, targetClientId=target_id)` |
-| Server-push (no sender) | `self._data_register.add_data_for_messageName("", name, msg)` |
+| Unicast to one client | `self._data_register.add_data_for_message_name(sender_id, name, msg, targetClientId=target_id)` |
+| Server-push (no sender) | `self._data_register.add_data_for_message_name("", name, msg)` |
 
 Data is only delivered to clients that have `messageName` in their `requires` list. If no client requires the name, the message is silently dropped.
 

@@ -41,8 +41,9 @@ This software is provided **"as is"**, without warranty of any kind. The develop
 
 ### When to Use grpchook
 - You need a simple, Python-based gRPC bidirectional streaming server and client.
-- When you want to data exchange blueprint for developers or AI agents to build on top of.
+- When you want a data exchange blueprint for developers or AI agents to build on top of.
 - You want a framework that can be extended with custom hooks for specific events.
+- You want to distribute clients to many different machines (e.g. voice recorder, voice to text, text to LLM, and vice versa until the final response is replayed)
 
 ### When Not to Use grpchook
 - When you need very large number of clients; the threading model may introduce overhead.
@@ -137,9 +138,8 @@ message Payload {
 
 ## ToDos & Roadmap
 
-## ToDos
-- Review markdown files (how to and agent file) for correctness
-- Complete/Check When to Use and When Not to Use grpchoo section
+### General
+- TBD
 
 ### Performance & Stability
 - Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
@@ -166,4 +166,4 @@ TBD
 
 | Version / Git Tag on Master | Description |
 |----------------------------|-------------|
-| 1.0.0                      | Initial public release. |
+| 0.0.1                      | Initial public release. |

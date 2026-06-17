@@ -47,4 +47,5 @@ jobs:
         # https://pypi.org/manage/project/<your-package>/settings/publishing/
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          repository-url: https://test.pypi.org/legacy/ # remove this line to publish to the real PyPI
           skip_existing: true
