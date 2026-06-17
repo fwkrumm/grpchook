@@ -88,9 +88,9 @@ UUID regenerated each `_setup_connection()` → prevents `DataRegister` race on 
 
 | Method | Purpose |
 |---|---|
-| `add_notification_queue_for_message_name(clientId, messageName, queue)` | subscribe |
-| `remove_notification_queues_for_client(clientId)` | deregister on disconnect |
-| `add_data_for_message_name(clientId, messageName, data, targetClientId=None)` | fan-out, skip sender; `targetClientId`=unicast |
+| `add_notification_queue_for_message_name(client_id, message_name, queue)` | subscribe |
+| `remove_notification_queues_for_client(client_id)` | deregister on disconnect |
+| `add_data_for_message_name(client_id, message_name, data, target_client_id=None)` | fan-out, skip sender; `target_client_id`=unicast |
 
 ## Exceptions — [grpchook/exceptions.py](grpchook/exceptions.py)
 

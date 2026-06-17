@@ -33,7 +33,7 @@ class MyServer(BaseServer):
 
     def on_client_connect(self, request: message_pb2.Message, context) -> bool:
         # called on first message from each client, before the client is registered
-        # request.metaInfo.clientInfo has: uuid, identifier, provides, requires
+        # request.metaInfo.clientInfo has: uuid, name, provides, requires
         # return False to reject (triggers PERMISSION_DENIED abort)
         return True
 
@@ -60,7 +60,7 @@ class MyServer(BaseServer):
         response = generate_message("my_response", struct_payload={"result": 42})
         # unicast back to requester only
         self._data_register.add_data_for_message_name(
-            peer.client_id, "my_response", response, targetClientId=peer.client_id
+            peer.client_id, "my_response", response, target_client_id=peer.client_id
         )
 
     def on_shutdown(self):
@@ -120,7 +120,7 @@ Subclass `BaseClient`. Set `provides` and `requires`.
 class MyClient(BaseClient):
     def __init__(self, port):
         super().__init__(
-            identifier="my-client",
+            name="my-client",
             port=port,
             provides=["my_request"],      # message names this client will send
             requires=["my_response"],     # message names this client wants to receive
@@ -236,7 +236,7 @@ raw = data.payload.bytePayload             # bytes
 |---|---|
 | Fan-out to all subscribers | `on_receive()` returns `True` |
 | Drop / handle manually | `on_receive()` returns `False` |
-| Unicast to one client | `self._data_register.add_data_for_message_name(sender_id, name, msg, targetClientId=target_id)` |
+| Unicast to one client | `self._data_register.add_data_for_message_name(sender_id, name, msg, target_client_id=target_id)` |
 | Server-push (no sender) | `self._data_register.add_data_for_message_name("", name, msg)` |
 
 Data is only delivered to clients that have `messageName` in their `requires` list. If no client requires the name, the message is silently dropped.
