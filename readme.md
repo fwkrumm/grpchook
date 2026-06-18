@@ -249,4 +249,5 @@ BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
 
 | Version / Git Tag on Master | Description |
 |----------------------------|-------------|
-| 0.0.1                      | Initial public release. |
+| 0.0.1                      | Unpublished. |
+| 0.0.2                      | Initial public release. |
