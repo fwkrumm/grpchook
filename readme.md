@@ -1,8 +1,252 @@
 # grpchook
 
-This package is not yet ready for production. It will be fully open source under the MIT license soon, but I am still actively working on several parts of it.
-I published the repository early because I want to make use of GitHub’s free CI minutes.
+**grpchook** (gRPC + hook) is a Python framework for building asynchronous gRPC bidirectional-streaming services. Subclass `BaseServer` and `BaseClient`, override the hooks you need — the framework handles all gRPC plumbing.
 
-If you want to explore the code, please check the development branches rather than the main branch. As mentioned, the project is still in progress and not production‑ready.
+[![PyPI](https://img.shields.io/pypi/v/grpchook)](https://pypi.org/project/grpchook/)
+[![Python](https://img.shields.io/pypi/pyversions/grpchook)](https://pypi.org/project/grpchook/)
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue)](LICENSE.txt)
 
-For more details, see readme_final.md.
+> **Status: Work in Progress.**
+> The project is open source and will remain open source.
+> Treat with caution. If you depend on it, **pin your version**.
+
+---
+
+## Table of Contents
+
+- [Disclaimer](#disclaimer)
+- [When to Use and When Not to Use grpchook](#when-to-use-and-when-not-to-use-grpchook)
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [From PyPI](#from-pypi)
+  - [From Source](#from-source)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
+- [Testing](#testing)
+- [Regenerating the gRPC Interface](#regenerating-the-grpc-interface)
+- [ToDos & Roadmap](#todos-roadmap)
+- [Known Issues & Troubleshooting](#known-issues-troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [Release History](#release-history)
+
+---
+<a name="disclaimer"></a>
+<a id="disclaimer"></a>
+
+## Disclaimer
+
+Core concept by a human developer. AI was used to assist with unit and integration tests, examples, documentation, and selected code sections. Core logic has been reviewed by a human; the test suite has not been fully audited — there may be AI-introduced oversights. Please report any issues you find.
+
+This software is provided **"as is"**, without warranty of any kind. The developer is not responsible for any damage, data loss, security vulnerabilities, or other issues that may arise from using this software. **You use it at your own risk.** See [LICENSE.txt](LICENSE.txt) for the full BSD 3-Clause terms.
+
+
+---
+<a name="when-to-use-and-when-not-to-use-grpchook"></a>
+<a id="when-to-use-and-when-not-to-use-grpchook"></a>
+## When to Use and When Not to Use grpchook
+
+### When to Use grpchook
+- You need a simple, Python-based gRPC bidirectional streaming server and client.
+- You want a data exchange blueprint for developers or AI agents to build on top of.
+- You want a framework that can be extended with custom hooks for specific events.
+- You want to distribute clients to many different machines (e.g. voice recorder, voice to text, text to LLM, and vice versa until the final response is replayed)
+
+  **Example — four clients on four machines, all routed through one grpchook server:**
+
+  > 💡 Diagram requires the [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) extension to render in VS Code.
+
+  ```mermaid
+  flowchart LR
+      subgraph M1["📦 Machine 1"]
+          VR["🎤 Voice Recorder"]
+      end
+      subgraph M2["📦 Machine 2"]
+          STT["📝 Speech-to-Text"]
+      end
+      subgraph M3["📦 Machine 3"]
+          LLM["🤖 LLM Processor"]
+      end
+      subgraph M4["📦 Machine 4"]
+          RP["🔊 Voice Replay"]
+      end
+
+      SRV(["⚙️ grpchook Server"])
+
+      VR  -->|"① audio"| SRV
+      SRV -->|"① audio"| STT
+      STT -->|"② transcript"| SRV
+      SRV -->|"② transcript"| LLM
+      LLM -->|"③ llm_response"| SRV
+      SRV -->|"③ llm_response"| RP
+  ```
+
+### When Not to Use grpchook
+- When you need a very large number of clients; the threading model may introduce overhead.
+- When you need direct peer-to-peer communication without a server intermediary; grpchook routes all messages through a central server.
+- You want a framework that supports multiple programming languages out of the box; grpchook is (currently) Python-only.
+
+---
+<a name="requirements"></a>
+<a id="requirements"></a>
+
+## Requirements
+
+- Python 3.10 or later
+- A dedicated virtual environment is **strongly recommended** — gRPC version conflicts with other packages are common when using grpchook.
+
+---
+<a name="installation"></a>
+<a id="installation"></a>
+
+## Installation
+
+<a name="from-pypi"></a>
+<a id="from-pypi"></a>
+### From PyPI
+
+```bash
+pip install grpchook
+```
+
+<a name="from-source"></a>
+<a id="from-source"></a>
+### From Source
+
+```bash
+git clone https://github.com/fwkrumm/grpchook.git
+cd grpchook
+pip install -e .
+```
+
+---
+<a name="quick-start"></a>
+<a id="quick-start"></a>
+
+## Quick Start
+
+Refer to [HOW_TO.md](grpchook/assets/HOW_TO.md) for the full API reference and code examples.
+Alternatively run
+
+```bash
+python -m grpchook --generate-skeletons
+```
+
+to generate a very basic server and client skeleton in the current directory.
+Use
+
+```bash
+python -m grpchook --generate-interface-with-skeletons
+```
+
+to generate the skeletons along with a copy of the `message.proto` interface file in the current directory to modify which is then used by the skeletons.
+
+---
+<a name="examples"></a>
+<a id="examples"></a>
+
+## Examples
+
+Runnable examples are available in two locations:
+
+- `examples/` — self-contained, scenario-focused examples
+- `tests/integration/` — integration test scenarios covering a broad range of use cases
+
+Run them on a machine with adequate resources; some scenarios are resource-intensive.
+
+---
+<a name="testing"></a>
+<a id="testing"></a>
+
+## Testing
+
+Install dev dependencies and run the unit tests:
+
+```bash
+pip install -r requirements_dev.txt
+python -m unittest discover -s tests
+```
+
+Integration tests are in `tests/integration/` and can be run via:
+
+```bash
+python tests/integration/run_integration_tests.py
+```
+
+---
+<a name="regenerating-the-grpc-interface"></a>
+<a id="regenerating-the-grpc-interface"></a>
+
+
+## Regenerating the gRPC Interface
+
+If you modify `grpchook/message.proto` after cloning the repository, regenerate the Python bindings with:
+
+```bash
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+```
+
+Note that all clients which connect to a server have to use the same proto schema version i.e. the same proto file. The different signals for the clients must be used in substructures:
+
+```proto
+message Payload {
+    // For client A
+    SomeTypeA payloadClientA = 1;
+
+	// For client B
+    SomeTypeB payloadClientB = 2;
+
+    ...
+}
+
+```
+
+---
+<a name="todos-roadmap"></a>
+<a id="todos-roadmap"></a>
+
+## ToDos & Roadmap
+
+### Performance & Stability
+- Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
+- Verify behavior when connections are interrupted mid-stream; ensure no ghost threads or queue deadlocks occur.
+
+### Planned Features
+- Multi-language client example (e.g., C++ or Rust).
+- SSL/TLS usage example.
+
+
+---
+<a name="known-issues-troubleshooting"></a>
+<a id="known-issues-troubleshooting"></a>
+
+## Known Issues & Troubleshooting
+
+TBD
+
+---
+<a name="contributing"></a>
+<a id="contributing"></a>
+
+## Contributing
+
+Contributions are welcome. Please open an issue first for major changes so the approach can be discussed. For bug fixes and small improvements, a pull request is sufficient.
+
+---
+<a name="license"></a>
+<a id="license"></a>
+
+## License
+
+BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
+
+---
+<a name="release-history"></a>
+<a id="release-history"></a>
+
+## Release History
+
+
+| Version / Git Tag on Master | Description |
+|----------------------------|-------------|
+| 0.0.1                      | Initial public release. |

@@ -1,0 +1,74 @@
+name: Weekly Latest Python Check
+
+on:
+  schedule:
+    - cron: '0 12 * * 1' # Every Monday at 12:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+# Only one weekly run at a time; cancel any stale in-progress run.
+concurrency:
+  group: weekly-latest-python
+  cancel-in-progress: true
+
+# Minimal token permissions.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Run tests against the newest stable Python to catch upstream compatibility issues early.
+    name: Test (latest Python / ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-22.04-arm, ubuntu-24.04-arm]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up latest stable Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt coverage
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run unit tests with coverage
+        run: |
+          python -m coverage run -m unittest discover -s tests -p "test_*.py"
+          coverage report -m
+
+  lint:
+    name: Pylint (latest Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up latest stable Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system -r requirements.txt pylint
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run Pylint
+        run: |
+          pylint grpchook tests examples

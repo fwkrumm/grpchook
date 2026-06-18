@@ -1,0 +1,13 @@
+* text=auto
+
+# Force LF for source / scripts we want normalized
+*.py text eol=lf
+*.pyi text eol=lf
+*.sh text eol=lf
+
+# Keep CRLF for Windows batch scripts
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary

@@ -1,0 +1,153 @@
+name: CI
+
+on: [push, pull_request]
+
+# Cancel in-progress runs for the same ref (rapid pushes to a branch/PR).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Minimal token permissions.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # if: false  # disabled — tests already passing; re-enable when needed
+    name: Test (py${{ matrix.python-version }} / ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Report all matrix failures, not just the first.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-22.04-arm, ubuntu-24.04-arm]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14", "3.x"]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt coverage
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run unit tests with coverage
+        run: |
+          python -m coverage run -m unittest discover -s tests -p "test_*.py"
+          coverage report -m
+
+  integration-test-ubuntu:
+    # if: false
+    name: Integration test (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run integration tests
+        run: python tests/integration/run_integration_tests.py
+
+  integration-test-windows:
+    # if: false
+    name: Integration test (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run integration tests
+        run: python tests/integration/run_integration_tests.py
+
+  integration-test-macos:
+    # if: false
+    name: Integration test (macos-latest)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system --only-binary grpcio,grpcio-tools -r requirements.txt
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run integration tests
+        run: python tests/integration/run_integration_tests.py
+
+
+  lint:
+    # if: false # failing atm
+    name: Pylint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install --system -r requirements.txt -r requirements_dev.txt
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Run Pylint
+        run: |
+          pylint grpchook tests examples

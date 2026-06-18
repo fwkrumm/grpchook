@@ -1,0 +1,51 @@
+name: Publish to PyPI
+
+on:
+  push:
+    branches:
+      - master
+
+# Minimal token permissions.
+# id-token: write is required for PyPI Trusted Publishing (OIDC — no stored secrets needed).
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    # The 'pypi-release' environment can require manual approval before publishing.
+    environment: pypi-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install grpcio-tools for proto generation
+        run: uv pip install --system --only-binary grpcio-tools grpcio-tools
+
+      - name: Generate proto
+        run: python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
+
+      - name: Build distribution packages (sdist + wheel)
+        run: uv build
+
+      - name: Publish to PyPI via Trusted Publishing
+        # Uses OIDC — no PYPI_API_TOKEN secret required.
+        # Configure the trusted publisher once at:
+        # https://pypi.org/manage/project/<your-package>/settings/publishing/
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # repository-url: https://test.pypi.org/legacy/ # for testing
+          skip_existing: true

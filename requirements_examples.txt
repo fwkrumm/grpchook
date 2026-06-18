@@ -1,0 +1,12 @@
+# Dependencies for examples/ and example-style UI scripts only.
+# The core framework (requirements.txt) does NOT need these.
+#
+# Install with:
+#   pip install -r requirements.txt -r requirements_examples.txt
+
+# interactive_streaming and mcp_server examples
+requests>=2.31.0
+
+# watchdog Aero dashboard (tests/integration/watchdog/watchdog_ui.py)
+# and mcp_server UI task (examples/mcp_server/_task.py)
+flask>=3.0.0
