@@ -119,6 +119,20 @@ pip install -e .
 ## Quick Start
 
 Refer to [HOW_TO.md](grpchook/assets/HOW_TO.md) for the full API reference and code examples.
+Alternatively run
+
+```bash
+python -m grpchook --generate-skeletons
+```
+
+to generate a very basic server and client skeleton in the current directory.
+Use
+
+```bash
+python -m grpchook --generate-interface-with-skeletons
+```
+
+to generate the skeletons along with a copy of the `message.proto` interface file in the current directory to modify which is then used by the skeletons.
 
 ---
 <a name="examples"></a>
