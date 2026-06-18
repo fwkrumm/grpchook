@@ -1,6 +1,6 @@
 name: Weekly gRPC Compat
 
-n:
+on:
   schedule:
     - cron: '0 14 * * 1'  # Every Monday at 14:00 UTC (2 h after weekly-latest-python)
   workflow_dispatch:  # Allow manual trigger
