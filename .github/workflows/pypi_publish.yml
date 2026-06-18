@@ -3,8 +3,7 @@ name: Publish to PyPI
 on:
   push:
     branches:
-      # - master # afer testing
-      - prepare_initial_version
+      - master
 
 # Minimal token permissions.
 # id-token: write is required for PyPI Trusted Publishing (OIDC — no stored secrets needed).
@@ -48,5 +47,5 @@ jobs:
         # https://pypi.org/manage/project/<your-package>/settings/publishing/
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: https://test.pypi.org/legacy/ # remove this line to publish to the real PyPI
+          # repository-url: https://test.pypi.org/legacy/ # for testing
           skip_existing: true
