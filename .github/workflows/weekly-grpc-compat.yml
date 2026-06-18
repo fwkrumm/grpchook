@@ -1,10 +1,9 @@
 name: Weekly gRPC Compat
 
-on: [push, pull_request] # replace before merge to master
-#on:
-#  schedule:
-#    - cron: '0 14 * * 1'  # Every Monday at 14:00 UTC (2 h after weekly-latest-python)
-#  workflow_dispatch:  # Allow manual trigger
+n:
+  schedule:
+    - cron: '0 14 * * 1'  # Every Monday at 14:00 UTC (2 h after weekly-latest-python)
+  workflow_dispatch:  # Allow manual trigger
 
 # Only one run at a time; cancel stale in-progress run.
 concurrency:

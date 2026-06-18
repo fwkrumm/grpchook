@@ -1,10 +1,9 @@
 name: Weekly Latest Python Check
 
-on: [push, pull_request] # replace before merge to master
-#on:
-#  schedule:
-#    - cron: '0 12 * * 1' # Every Monday at 12:00 UTC
-#  workflow_dispatch: # Allow manual trigger
+on:
+  schedule:
+    - cron: '0 12 * * 1' # Every Monday at 12:00 UTC
+  workflow_dispatch: # Allow manual trigger
 
 # Only one weekly run at a time; cancel any stale in-progress run.
 concurrency:
