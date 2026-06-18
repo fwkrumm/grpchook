@@ -2,6 +2,10 @@
 
 **grpchook** (gRPC + hook) is a Python framework for building asynchronous gRPC bidirectional-streaming services. Subclass `BaseServer` and `BaseClient`, override the hooks you need — the framework handles all gRPC plumbing.
 
+[![PyPI](https://img.shields.io/pypi/v/grpchook)](https://pypi.org/project/grpchook/)
+[![Python](https://img.shields.io/pypi/pyversions/grpchook)](https://pypi.org/project/grpchook/)
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue)](LICENSE.txt)
+
 > **Status: Work in Progress.**
 > The project is open source and will remain open source.
 > Treat with caution. If you depend on it, **pin your version**.
@@ -18,9 +22,12 @@
   - [From Source](#from-source)
 - [Quick Start](#quick-start)
 - [Examples](#examples)
+- [Testing](#testing)
 - [Regenerating the gRPC Interface](#regenerating-the-grpc-interface)
 - [ToDos & Roadmap](#todos-roadmap)
 - [Known Issues & Troubleshooting](#known-issues-troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 - [Release History](#release-history)
 
 ---
@@ -41,7 +48,7 @@ This software is provided **"as is"**, without warranty of any kind. The develop
 
 ### When to Use grpchook
 - You need a simple, Python-based gRPC bidirectional streaming server and client.
-- When you want a data exchange blueprint for developers or AI agents to build on top of.
+- You want a data exchange blueprint for developers or AI agents to build on top of.
 - You want a framework that can be extended with custom hooks for specific events.
 - You want to distribute clients to many different machines (e.g. voice recorder, voice to text, text to LLM, and vice versa until the final response is replayed)
 
@@ -75,8 +82,8 @@ This software is provided **"as is"**, without warranty of any kind. The develop
   ```
 
 ### When Not to Use grpchook
-- When you need very large number of clients; the threading model may introduce overhead.
-- When you do not want client-client communication; grpchook is designed for bidirectional streaming via a server.
+- When you need a very large number of clients; the threading model may introduce overhead.
+- When you need direct peer-to-peer communication without a server intermediary; grpchook routes all messages through a central server.
 - You want a framework that supports multiple programming languages out of the box; grpchook is (currently) Python-only.
 
 ---
@@ -86,7 +93,7 @@ This software is provided **"as is"**, without warranty of any kind. The develop
 ## Requirements
 
 - Python 3.10 or later
-- A dedicated virtual environment is **strongly recommended** — gRPC version conflicts with other packages are grpchook.
+- A dedicated virtual environment is **strongly recommended** — gRPC version conflicts with other packages are common when using grpchook.
 
 ---
 <a name="installation"></a>
@@ -148,13 +155,32 @@ Runnable examples are available in two locations:
 Run them on a machine with adequate resources; some scenarios are resource-intensive.
 
 ---
+<a name="testing"></a>
+<a id="testing"></a>
+
+## Testing
+
+Install dev dependencies and run the unit tests:
+
+```bash
+pip install -r requirements_dev.txt
+python -m unittest discover -s tests
+```
+
+Integration tests are in `tests/integration/` and can be run via:
+
+```bash
+python tests/integration/run_integration_tests.py
+```
+
+---
 <a name="regenerating-the-grpc-interface"></a>
 <a id="regenerating-the-grpc-interface"></a>
 
 
 ## Regenerating the gRPC Interface
 
-If you modify or freshly cloned the repository `grpchook/message.proto`, regenerate the Python bindings with:
+If you modify `grpchook/message.proto` after cloning the repository, regenerate the Python bindings with:
 
 ```bash
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. --pyi_out=. grpchook/message.proto
@@ -165,7 +191,7 @@ Note that all clients which connect to a server have to use the same proto schem
 ```proto
 message Payload {
     // For client A
-    SomeTypeA paylaodClientA = 1;
+    SomeTypeA payloadClientA = 1;
 
 	// For client B
     SomeTypeB payloadClientB = 2;
@@ -180,9 +206,6 @@ message Payload {
 <a id="todos-roadmap"></a>
 
 ## ToDos & Roadmap
-
-### General
-- TBD
 
 ### Performance & Stability
 - Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
@@ -202,8 +225,25 @@ message Payload {
 TBD
 
 ---
+<a name="contributing"></a>
+<a id="contributing"></a>
+
+## Contributing
+
+Contributions are welcome. Please open an issue first for major changes so the approach can be discussed. For bug fixes and small improvements, a pull request is sufficient.
+
+---
+<a name="license"></a>
+<a id="license"></a>
+
+## License
+
+BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
+
+---
 <a name="release-history"></a>
 <a id="release-history"></a>
+
 ## Release History
 
 
