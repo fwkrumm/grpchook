@@ -45,6 +45,35 @@ This software is provided **"as is"**, without warranty of any kind. The develop
 - You want a framework that can be extended with custom hooks for specific events.
 - You want to distribute clients to many different machines (e.g. voice recorder, voice to text, text to LLM, and vice versa until the final response is replayed)
 
+  **Example — four clients on four machines, all routed through one grpchook server:**
+
+  > 💡 Diagram requires the [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) extension to render in VS Code. Renders natively on GitHub.
+
+  ```mermaid
+  flowchart LR
+      subgraph M1["📦 Machine 1"]
+          VR["🎤 Voice Recorder"]
+      end
+      subgraph M2["📦 Machine 2"]
+          STT["📝 Speech-to-Text"]
+      end
+      subgraph M3["📦 Machine 3"]
+          LLM["🤖 LLM Processor"]
+      end
+      subgraph M4["📦 Machine 4"]
+          RP["🔊 Voice Replay"]
+      end
+
+      SRV(["⚙️ grpchook Server"])
+
+      VR  -->|"① audio"| SRV
+      SRV -->|"① audio"| STT
+      STT -->|"② transcript"| SRV
+      SRV -->|"② transcript"| LLM
+      LLM -->|"③ llm_response"| SRV
+      SRV -->|"③ llm_response"| RP
+  ```
+
 ### When Not to Use grpchook
 - When you need very large number of clients; the threading model may introduce overhead.
 - When you do not want client-client communication; grpchook is designed for bidirectional streaming via a server.
