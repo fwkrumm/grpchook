@@ -54,7 +54,7 @@ This software is provided **"as is"**, without warranty of any kind. The develop
 
   **Example — four clients on four machines, all routed through one grpchook server:**
 
-  > 💡 Diagram requires the [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) extension to render in VS Code. Renders natively on GitHub.
+  > 💡 Diagram requires the [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) extension to render in VS Code.
 
   ```mermaid
   flowchart LR
