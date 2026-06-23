@@ -298,8 +298,9 @@ class BaseServer(message_pb2_grpc.StreamServicer):  # pylint: disable=too-many-i
         """
         Start the server and wait for termination
         """
+        executor = futures.ThreadPoolExecutor(max_workers=self._config.max_workers)
         server = grpc.server(
-            futures.ThreadPoolExecutor(max_workers=self._config.max_workers),
+            executor,
                 options=self._config.server_options
             )
         message_pb2_grpc.add_StreamServicer_to_server(self, server)
@@ -326,6 +327,8 @@ class BaseServer(message_pb2_grpc.StreamServicer):  # pylint: disable=too-many-i
                     "gRPC server stop did not complete within 10s; continuing shutdown"
                 )
             server = None
+            # shutdown executor i.e. wait for all DataChannel threads to finish
+            executor.shutdown(wait=True)
         self.logger.iinfo("server stopped")
 
 

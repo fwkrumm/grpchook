@@ -439,8 +439,9 @@ class BaseClient:  # pylint: disable=too-many-instance-attributes
         self.send_queue.join()
 
         if additional_sleep > 0:
-            # NOTE that we skip the check here if the run event is still set since
-            # it should only be released by the same thread via disconnect.
+            # additional sleep to ensure that after the queue has joined the final message
+            # has been sent to the server. An alternative would be an additional check if the
+            # receiving thread is alive.
             time.sleep(additional_sleep)
 
     def __enter__(self):

@@ -21,9 +21,11 @@
   - [From PyPI](#from-pypi)
   - [From Source](#from-source)
 - [Quick Start](#quick-start)
+- [Parameters](#parameters)
 - [Minimal Examples](#minimal-examples)
 - [Examples](#examples)
 - [Testing](#testing)
+- [Extend default Configuration](#extend-default-configuration)
 - [Regenerating the gRPC Interface](#regenerating-the-grpc-interface)
 - [ToDos & Roadmap](#todos-roadmap)
 - [Known Issues & Troubleshooting](#known-issues-troubleshooting)
@@ -141,6 +143,47 @@ python -m grpchook --generate-interface-with-skeletons
 ```
 
 to generate the skeletons along with a copy of the `message.proto` interface file in the current directory to modify which is then used by the skeletons.
+
+---
+
+<a name="parameters"></a>
+<a id="parameters"></a>
+
+## Parameters
+
+You can print the following text via `python -m grpchook --help`:
+
+```bash
+usage: python -m grpchook [-h] [--generate] [--generate-skeletons] [--generate-server] [--generate-client] [--generate-how-to] [--generate-interface] [--generate-interface-with-skeletons]
+
+grpchook scaffolding tool.
+
+Generates skeleton server/client files and the HOW_TO reference
+document into the current working directory.
+
+options:
+  -h, --help            show this help message and exit
+  --generate            Generate server_skeleton.py, client_skeleton.py, and HOW_TO.md
+  --generate-skeletons  Generate server_skeleton.py and client_skeleton.py
+  --generate-server     Generate server_skeleton.py only
+  --generate-client     Generate client_skeleton.py only
+  --generate-how-to     Copy HOW_TO.md into the current directory
+  --generate-interface  Copy message.proto into the current directory and print customisation instructions
+  --generate-interface-with-skeletons
+                        Copy message.proto and write server_skeleton.py + client_skeleton.py that load the custom interface at startup via compile_and_register()
+
+examples:
+  python -m grpchook --generate                          # skeleton + HOW_TO
+  python -m grpchook --generate-skeletons                  # server + client only
+  python -m grpchook --generate-server                   # server only
+  python -m grpchook --generate-client                   # client only
+  python -m grpchook --generate-how-to                   # HOW_TO.md only
+  python -m grpchook --generate-interface                # message.proto + instructions
+  python -m grpchook --generate-interface-with-skeletons  # proto + matching skeletons
+```
+
+
+
 
 ---
 <a name="minimal-examples"></a>
@@ -277,6 +320,27 @@ python tests/integration/run_integration_tests.py
 ```
 
 ---
+<a name="extend-default-configuration"></a>
+<a id="extend-default-configuration"></a>
+
+## Extend default Configuration
+
+Example for a client to use the default configuration but disable proxy forwarding:
+
+
+```python
+
+from grpchook.baseclient import BaseClient, ClientConfig
+
+class TestClient(BaseClient):
+    def __init__(self):
+        config = ClientConfig()
+        config.grpc_options += [("grpc.enable_http_proxy", 0)]
+        super().__init__(port=50051, name="echo-client", config=config)
+
+```
+
+---
 <a name="regenerating-the-grpc-interface"></a>
 <a id="regenerating-the-grpc-interface"></a>
 
@@ -309,6 +373,10 @@ message Payload {
 <a id="todos-roadmap"></a>
 
 ## ToDos & Roadmap
+
+
+### General
+- replace the additional sleep in `BaseClient.disconnect()` with a check if the receiving thread is still alive.
 
 ### Performance & Stability
 - Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
@@ -355,3 +423,4 @@ BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
 | 0.0.1                      | Unpublished. |
 | 0.0.2                      | Initial public release. |
 | 0.0.3                      | Add ms timestamp resolution to log output and minor adjustments to readme. |
+| 0.0.4                      | Add executor for server and wait for shutdown. |
