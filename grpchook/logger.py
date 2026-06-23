@@ -106,7 +106,8 @@ def get_logger(
             coloredlogs.install(
                 level=log_level,
                 logger=logger,
-                fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s",
+                fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] "\
+                    "%(levelname)s %(message)s",
                 datefmt="%Y-%m-%d %H:%M:%S",
                 level_styles={
                     "internal_debug": {"color": "blue"},
