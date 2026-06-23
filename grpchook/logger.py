@@ -95,7 +95,7 @@ def get_logger(
 
     # Create file formatter
     file_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
@@ -106,7 +106,7 @@ def get_logger(
             coloredlogs.install(
                 level=log_level,
                 logger=logger,
-                fmt="%(asctime)s %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s",
+                fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s",
                 datefmt="%Y-%m-%d %H:%M:%S",
                 level_styles={
                     "internal_debug": {"color": "blue"},

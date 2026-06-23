@@ -21,6 +21,7 @@
   - [From PyPI](#from-pypi)
   - [From Source](#from-source)
 - [Quick Start](#quick-start)
+- [Minimal Examples](#minimal-examples)
 - [Examples](#examples)
 - [Testing](#testing)
 - [Regenerating the gRPC Interface](#regenerating-the-grpc-interface)
@@ -142,6 +143,108 @@ python -m grpchook --generate-interface-with-skeletons
 to generate the skeletons along with a copy of the `message.proto` interface file in the current directory to modify which is then used by the skeletons.
 
 ---
+<a name="minimal-examples"></a>
+<a id="minimal-examples"></a>
+
+## Minimal Examples
+
+### Ultra-minimal — no subclassing required
+
+The simplest possible working setup: start a server, connect two clients, exchange a message.
+Everything runs in a single script — no subclassing or hook overrides needed.
+
+```python
+# example_minimal.py
+import threading
+from grpchook.baseserver import BaseServer
+from grpchook.baseclient import BaseClient
+from grpchook.tools import generate_message
+
+# start the server in a background thread
+server = BaseServer(port=50051, name="server")
+threading.Thread(target=server.serve_forever, daemon=True).start()
+
+# both clients declare the same channel name
+# fan-out skips the sender, so client_b receives what client_a sends
+client_a = BaseClient(port=50051, name="A", provides=["ping"], requires=["ping"])
+client_b = BaseClient(port=50051, name="B", provides=["ping"], requires=["ping"])
+
+client_a.send_data(generate_message("ping", byte_payload=b"hello"))
+
+msg = client_b.get_data(timeout=5.0)
+client_a.logger.info(msg.payload.bytePayload)   # b"hello"
+client_b.logger.info(msg.payload.bytePayload)   # b"hello"
+
+client_a.disconnect()
+client_b.disconnect()
+server.shutdown()
+```
+
+### Request / response — subclass with hooks
+
+For real workloads, subclass `BaseServer` to control routing and `BaseClient` to react to messages
+via the `on_receive` hook.
+
+**`server.py`**
+
+```python
+from grpchook.baseserver import BaseServer, Peer
+from grpchook.tools import generate_message
+import grpchook.message_pb2 as pb2
+
+
+class EchoServer(BaseServer):
+    def __init__(self):
+        super().__init__(port=50051, name="echo-server")
+
+    def on_receive(self, peer: Peer, request: pb2.Message) -> bool:
+        if request.metaInfo.messageName == "request":
+            reply = generate_message("response", byte_payload=request.payload.bytePayload)
+            self._data_register.add_data_for_message_name(
+                peer.client_id, "response", reply,
+                target_client_id=peer.client_id,   # unicast back to sender
+            )
+            return False   # skip default fan-out; routing handled above
+        return True
+
+
+EchoServer().serve_forever()
+```
+
+**`client.py`**
+
+```python
+from grpchook.baseclient import BaseClient
+from grpchook.tools import generate_message
+import grpchook.message_pb2 as pb2
+
+
+class EchoClient(BaseClient):
+    def __init__(self):
+        super().__init__(port=50051, name="echo-client",
+                         provides=["request"], requires=["response"])
+
+    def on_receive(self, data: pb2.Message):
+        print(f"Server replied: {data.payload.bytePayload.decode()}")
+
+
+client = EchoClient()
+client.send_data(generate_message("request", byte_payload=b"hello, grpchook!"))
+client.spin(timeout=5.0)   # calls on_receive() per message; returns on timeout/disconnect
+client.disconnect()
+```
+
+Run the server first, then the client:
+
+```bash
+# terminal 1
+python server.py
+
+# terminal 2
+python client.py
+```
+
+---
 <a name="examples"></a>
 <a id="examples"></a>
 
@@ -251,3 +354,4 @@ BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
 |----------------------------|-------------|
 | 0.0.1                      | Unpublished. |
 | 0.0.2                      | Initial public release. |
+| 0.0.3                      | Add ms timestamp resolution to log output and minor adjustments to readme. |
