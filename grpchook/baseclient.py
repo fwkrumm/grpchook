@@ -440,8 +440,10 @@ class BaseClient:  # pylint: disable=too-many-instance-attributes
 
         if additional_sleep > 0:
             # additional sleep to ensure that after the queue has joined the final message
-            # has been sent to the server. An alternative would be an additional check if the
-            # receiving thread is alive.
+            # has been sent to the server. An alternative might be self.stream.done() or
+            # self.stream.result()
+            # however note that also clients might call wait_done() to wait for send queue to be
+            # empty and thus do not disconnect.
             time.sleep(additional_sleep)
 
     def __enter__(self):

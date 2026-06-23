@@ -376,7 +376,7 @@ message Payload {
 
 
 ### General
-- replace the additional sleep in `BaseClient.disconnect()` with a check if the receiving thread is still alive.
+- replace the additional sleep in `BaseClient.disconnect()` at disconnect time with a check if the stream is alive/active?
 
 ### Performance & Stability
 - Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
