@@ -329,7 +329,6 @@ Example for a client to use the default configuration but disable proxy forwardi
 
 
 ```python
-
 from grpchook.baseclient import BaseClient, ClientConfig
 
 class TestClient(BaseClient):
