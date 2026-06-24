@@ -374,10 +374,6 @@ message Payload {
 
 ## ToDos & Roadmap
 
-
-### General
-- replace the additional sleep in `BaseClient.disconnect()` at disconnect time with a check if the stream is alive/active?
-
 ### Performance & Stability
 - Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
 - Verify behavior when connections are interrupted mid-stream; ensure no ghost threads or queue deadlocks occur.
