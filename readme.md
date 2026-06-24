@@ -336,7 +336,7 @@ class TestClient(BaseClient):
     def __init__(self):
         config = ClientConfig()
         config.grpc_options += [("grpc.enable_http_proxy", 0)]
-        super().__init__(port=50051, name="echo-client", config=config)
+        super().__init__(port=50051, name="test-client", config=config)
 
 ```
 
