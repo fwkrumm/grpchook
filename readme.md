@@ -27,8 +27,8 @@
 - [Testing](#testing)
 - [Extend default Configuration](#extend-default-configuration)
 - [Regenerating the gRPC Interface](#regenerating-the-grpc-interface)
-- [ToDos & Roadmap](#todos-roadmap)
-- [Known Issues & Troubleshooting](#known-issues-troubleshooting)
+- [ToDos and Roadmap](#todos-and-roadmap)
+- [Known Issues and Troubleshooting](#known-issues-and-troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 - [Release History](#release-history)
@@ -368,10 +368,10 @@ message Payload {
 ```
 
 ---
-<a name="todos-roadmap"></a>
-<a id="todos-roadmap"></a>
+<a name="todos-and-roadmap"></a>
+<a id="todos-and-roadmap"></a>
 
-## ToDos & Roadmap
+## ToDos and Roadmap
 
 ### Performance & Stability
 - Evaluate replacing the threading model with `asyncio` if the performance gain justifies the API tradeoff.
@@ -383,10 +383,10 @@ message Payload {
 
 
 ---
-<a name="known-issues-troubleshooting"></a>
-<a id="known-issues-troubleshooting"></a>
+<a name="known-issues-and-troubleshooting"></a>
+<a id="known-issues-and-troubleshooting"></a>
 
-## Known Issues & Troubleshooting
+## Known Issues and Troubleshooting
 
 TBD
 
@@ -419,3 +419,4 @@ BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
 | 0.0.2                      | Initial public release. |
 | 0.0.3                      | Add ms timestamp resolution to log output and minor adjustments to readme. |
 | 0.0.4                      | Add executor for server and wait for shutdown. |
+| 0.0.5                      | Fix readme on pypi page. |
