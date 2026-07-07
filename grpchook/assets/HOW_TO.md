@@ -198,6 +198,68 @@ client = MyClient(port=50051, config=ClientConfig(
 
 ---
 
+## Custom Interface (Runtime Proto)
+
+Use a custom `.proto` instead of the bundled one — without modifying `grpchook/`.
+The proto must define the same message/service structure (`Message`, `ClientProvides`, `ServerProvides`, `StreamStub`, `StreamServicer`).
+
+### Compile and register at startup
+
+```python
+from grpchook.custom_interface import compile_and_register
+
+# Compiles my_proto/message.proto, registers as grpchook.message_pb2 / grpchook.message_pb2_grpc
+pb2, pb2_grpc = compile_and_register(
+    proto_path="my_proto/message.proto",
+    package="grpchook",        # replaces the built-in modules under this package name
+    out_dir="my_proto/",       # optional; temp dir used if omitted
+)
+```
+
+Call this **before** importing `BaseServer` / `BaseClient`. Once registered, all grpchook internals pick up the custom modules automatically.
+
+### Typical project layout
+
+```
+my_project/
+    my_proto/
+        message.proto       # custom proto (same service structure)
+    _proto_setup.py         # side-effect import: compile + register
+    server.py
+    client.py
+```
+
+`_proto_setup.py`:
+
+```python
+from pathlib import Path
+from grpchook.custom_interface import compile_and_register
+
+compile_and_register(
+    proto_path=Path(__file__).parent / "my_proto" / "message.proto",
+    package="grpchook",
+    out_dir=Path(__file__).parent / "my_proto",
+)
+```
+
+`server.py` / `client.py`:
+
+```python
+import _proto_setup  # must be first — registers custom proto before grpchook imports
+from grpchook.baseserver import BaseServer
+```
+
+### Lower-level functions
+
+| Function | Purpose |
+|---|---|
+| `compile_proto(proto_path, out_dir=None) → Path` | Run `grpc_tools.protoc`; return output dir |
+| `load_pb_modules_from_dir(dir_path, package, register=True) → (pb2, pb2_grpc)` | Load generated `message_pb2.py` + `message_pb2_grpc.py` from dir |
+| `validate_interface(pb2, pb2_grpc)` | Assert required symbols present; raise `RuntimeError` if not |
+| `resolve_modules(message_module, grpc_module, module_path, package)` | Multi-mode resolver: accepts module objects, import strings, or dir path; falls back to bundled |
+
+---
+
 ## Messages
 
 ### Create a message
