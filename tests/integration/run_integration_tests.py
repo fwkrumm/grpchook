@@ -95,6 +95,11 @@ EXAMPLES = [
         "server": ROOT / "high_fire" / "server_high_fire.py",
         "client": ROOT / "high_fire" / "clients_high_fire.py",
     },
+    {
+        "name": "request_response",
+        "server": ROOT / "request_response" / "server_request_response.py",
+        "client": ROOT / "request_response" / "clients_request_response.py",
+    },
 ]
 
 def _exists(p: Path) -> bool:
