@@ -97,18 +97,18 @@ class ClientB(BaseClient):
             data: Received protobuf message (the request).
         """
         self.requests_received += 1
-        request_id = data.metaInfo.messageId
-        self.logger.info("ClientB: received request (messageId=%s)", request_id)
+        req_id = data.metaInfo.messageId
+        self.logger.info("ClientB: received request (messageId=%s)", req_id)
 
         for i in range(N_EXTRA_RESPONSES):
             extra = generate_message(RESPONSE_MSG, byte_payload=f"extra_{i}".encode())
             self.send_data(extra)
             self.logger.info("ClientB: sent extra response %d", i)
 
-        matched = generate_message(RESPONSE_MSG, byte_payload=b"response")
-        matched.metaInfo.messageId = request_id  # correlate with the request
-        self.send_data(matched)
-        self.logger.info("ClientB: sent matched response (messageId=%s)", request_id)
+        reply = generate_message(RESPONSE_MSG, byte_payload=b"response")
+        reply.metaInfo.messageId = req_id  # correlate with the request
+        self.send_data(reply)
+        self.logger.info("ClientB: sent matched response (messageId=%s)", req_id)
 
 
 if __name__ == "__main__":
