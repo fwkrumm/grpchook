@@ -420,3 +420,4 @@ BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
 | 0.0.3                      | Add ms timestamp resolution to log output and minor adjustments to readme. |
 | 0.0.4                      | Add executor for server and wait for shutdown. |
 | 0.0.5                      | Fix readme on pypi page. |
+| 0.0.6                      | Update how-to markdown to include custom interface description. |
