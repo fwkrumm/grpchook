@@ -421,3 +421,4 @@ BSD 3-Clause — see [LICENSE.txt](LICENSE.txt).
 | 0.0.4                      | Add executor for server and wait for shutdown. |
 | 0.0.5                      | Fix readme on pypi page. |
 | 0.0.6                      | Update how-to markdown to include custom interface description. |
+| 0.0.7                      | Fix race condition which allowed clients to put data before welcome message. |
