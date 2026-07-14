@@ -190,7 +190,7 @@ class BaseServer(message_pb2_grpc.StreamServicer):  # pylint: disable=too-many-i
                     # Welcome message must be enqueued BEFORE registering requires in
                     # DataRegister.  Once a require is registered, other threads (e.g. a
                     # server-side broadcast loop) can immediately push data messages into
-                    # notification_queue.  If the welcome message were enqueued after
+                    # notification_queue. If the welcome message were enqueued after
                     # registration there would be a race where a data message arrives first,
                     # causing _check_connection() on the client to consume the wrong message
                     # and subsequent get_data() calls to return the welcome (empty payload).
