@@ -10,6 +10,12 @@ Analysis of `grpchook` codebase. Ordered by impact / effort ratio.
 the file handler can capture everything. This means every `idebug()` call passes the
 logger-level gate and its arguments are formatted + written to disk.
 
+**Correction:** the INTERNAL_DEBUG logger level is intentional (see comment in `logger.py`:
+"Logger level must be INTERNAL to allow file handler to capture everything"). Hard-changing
+the default to `INFO` removes that documented full-tracing capability entirely — it is not a
+free 1-line perf win. Prefer making the *file handler's* level configurable instead of the
+shared logger level.
+
 **Hot-path offenders (fire on every message):**
 
 | Location | Call | Frequency |
@@ -21,20 +27,26 @@ logger-level gate and its arguments are formatted + written to disk.
 | `BaseClient._receive_loop` | `idebug("received data from server: %s", …)` | every inbound message |
 | `BaseClient.send_data` | `idebug("Enqueued data %s", …)` | every `send_data()` call |
 
-**Fix:** Change the default file handler level from `INTERNAL_DEBUG` → `INFO` in `get_logger`.
-Users who need full tracing opt in explicitly via `log_level=INTERNAL_DEBUG`.
-Single-line change in `logger.py`.
+**Fix:** Add a `file_log_level` parameter to `get_logger` (default `INTERNAL_DEBUG`, unchanged
+behavior) and let perf-sensitive users pass `file_log_level=logging.INFO` explicitly. Do not
+flip the shared default, since it silently disables an existing, documented feature.
 
 ---
 
-## 2. Redundant `isinstance` check in `DataRegister.add_data_for_message_name` — LOW-MEDIUM IMPACT
+## 2. `isinstance` check in `DataRegister.add_data_for_message_name` — NEGLIGIBLE IMPACT (revised)
 
 `add_data_for_message_name` calls `isinstance(data, message_pb2.Message)` on every fan-out.
-The data always arrives from `BaseServer._handle_client_receive` (typed), and is already
-validated at the `send_data()` entry point on the client side. This is dead weight on the
-hot routing path.
 
-**Fix:** Remove the `isinstance` guard (or replace with `assert` for debug builds only).
+**Correction:** the original impact estimate was overstated. A single `isinstance` check costs
+on the order of tens of nanoseconds — irrelevant next to queue locking, `queue.put`, and
+protobuf handling already on this path. It is also not purely "dead weight": since
+`add_data_for_message_name` is a public `DataRegister` method (not exclusively fed by the
+typed `BaseServer._handle_client_receive` path), the check is the only guard against
+non-`Message` objects reaching gRPC's `yield` downstream, where a type error would surface
+far from its cause.
+
+**Fix:** No change recommended. If profiling later shows this check is measurably hot,
+revisit — do not remove it as a blind perf optimization.
 
 ---
 
@@ -75,14 +87,17 @@ for small messages or loopback connections.
 **Fix:** Add an optional `compression` field to `ServerConfig` / `ClientConfig` and pass it
 to `grpc.server(...)` / `stub.DataChannel(...)`. Zero API-breaking change.
 
+**Caveat:** compression must be enabled on both ends to take effect — a server-only or
+client-only setting is a no-op for that direction. Document this when exposing the option.
+
 ---
 
 ## Summary Table
 
 | # | Area | Effort | Impact |
 |---|---|---|---|
-| 1 | File logger level on hot path | Trivial (1 line) | High |
-| 2 | Redundant `isinstance` in fan-out | Trivial (remove 4 lines) | Low–Medium |
+| 1 | File handler log level configurable | Small (new param, no default change) | High |
+| 2 | `isinstance` in fan-out | N/A — not recommended | Negligible |
 | 3 | `bytePayload` over `structPayload` | Zero (docs only) | Medium |
 | 4 | `max_workers` explicit + warning | Small | Medium |
-| 5 | gRPC compression option | Small (config field) | Low–Medium |
+| 5 | gRPC compression option (both ends) | Small (config field) | Low–Medium |
