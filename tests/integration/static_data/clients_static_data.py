@@ -9,6 +9,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))  # pylint: disable=wrong-import-position
 # pylint: disable=wrong-import-position  # project path must be set before importing project modules
 from grpchook.tools import generate_message, set_metadata
+from tests.integration._interface import get_args
 
 from grpchook.baseclient import BaseClient
 from grpchook import message_pb2
@@ -39,7 +40,8 @@ class GrpcTestClientRequester(BaseClient):
         self.logger.info("initialized GrpcTestClientRequester")
 
 if __name__ == "__main__":
-    client1 = GrpcTestClientProvider("client1", 49999)
+    args = get_args("Static data test")
+    client1 = GrpcTestClientProvider("client1", args.port)
 
     # client 1 sends the data (for client2) which is not connected yet.
     data_to_send = generate_message(message_name="test_message",
@@ -56,7 +58,7 @@ if __name__ == "__main__":
                         "client 2 and requesting data...")
     time.sleep(1)
 
-    client2 = GrpcTestClientRequester("client2", 49999)
+    client2 = GrpcTestClientRequester("client2", args.port)
     try:
         # now we request the stored data and check if the message matches the one we sent before
         for _ in range(REQUEST_RUNS):
