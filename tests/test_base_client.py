@@ -19,6 +19,8 @@ import threading
 import unittest
 from unittest.mock import MagicMock, patch
 
+import grpc
+
 from grpchook import message_pb2
 from grpchook.baseclient import BaseClient, ClientConfig
 from grpchook.exceptions import ClientExit, GrpcValueError
@@ -246,6 +248,27 @@ class TestClientConfig(unittest.TestCase):
         with patch.object(BaseClient, "run", lambda self: None):
             client = BaseClient(name="meta-test", port=50099, config=cfg)
         self.assertEqual(client.config.ext_metadata, [("x-token", "abc")])
+
+    def test_compression_default_is_none(self):
+        """ClientConfig.compression defaults to None (no compression)."""
+        self.assertIsNone(ClientConfig().compression)
+
+    def test_compression_gzip_accepted(self):
+        """ClientConfig accepts grpc.Compression.Gzip."""
+        cfg = ClientConfig(compression=grpc.Compression.Gzip)
+        self.assertEqual(cfg.compression, grpc.Compression.Gzip)
+
+    def test_compression_deflate_accepted(self):
+        """ClientConfig accepts grpc.Compression.Deflate."""
+        cfg = ClientConfig(compression=grpc.Compression.Deflate)
+        self.assertEqual(cfg.compression, grpc.Compression.Deflate)
+
+    def test_compression_passed_to_client(self):
+        """BaseClient stores the config compression field for use in _connect."""
+        cfg = ClientConfig(compression=grpc.Compression.Gzip)
+        with patch.object(BaseClient, "run", lambda self: None):
+            client = BaseClient(name="comp-test", port=50099, config=cfg)
+        self.assertEqual(client.config.compression, grpc.Compression.Gzip)
 
 
 # ---------------------------------------------------------------------------

@@ -102,6 +102,11 @@ EXAMPLES = [
         "server": ROOT / "request_response" / "server_request_response.py",
         "client": ROOT / "request_response" / "clients_request_response.py",
     },
+    {
+        "name": "compression",
+        "server": ROOT / "compression" / "server_compression.py",
+        "client": ROOT / "compression" / "clients_compression.py",
+    },
 ]
 
 def _exists(p: Path) -> bool:
