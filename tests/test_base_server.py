@@ -202,7 +202,7 @@ class TestServerConfig(unittest.TestCase):
         """BaseServer stores the config compression field for use in serve_forever."""
         cfg = ServerConfig(compression=grpc.Compression.Gzip)
         server = BaseServer(port=50088, config=cfg)
-        self.assertEqual(server._config.compression, grpc.Compression.Gzip)
+        self.assertEqual(server.config.compression, grpc.Compression.Gzip)
 
 
 if __name__ == "__main__":

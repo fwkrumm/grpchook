@@ -385,6 +385,11 @@ class BaseServer(message_pb2_grpc.StreamServicer):  # pylint: disable=too-many-i
         """The server's global exit event (read-only)."""
         return self._global_exit_event
 
+    @property
+    def config(self) -> "ServerConfig":
+        """Server configuration (read-only)."""
+        return self._config
+
     def on_init(self):
         """
         Called after server initialization. Override to perform additional setup.
