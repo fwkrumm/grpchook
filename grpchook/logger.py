@@ -26,7 +26,9 @@ class GrpcLogger(logging.Logger):
             self._log(INTERNAL_INFO, message, args, **kwargs)
 
     def idebug(self, message, *args, **kwargs):
-        """Log at INTERNAL_DEBUG level (5) --- fine-grained framework tracing, below INTERNAL_INFO."""
+        """
+        Log at INTERNAL_DEBUG level (5) --- fine-grained framework tracing, below INTERNAL_INFO.
+        """
         if self.isEnabledFor(INTERNAL_DEBUG):
             self._log(INTERNAL_DEBUG, message, args, **kwargs)
 
@@ -78,7 +80,8 @@ def get_logger(
     # Avoid adding handlers multiple times
     if logger.handlers:
         warnings.warn(
-            f"Logger '{name}' already configured; returning cached logger and ignoring new settings.",
+            f"Logger '{name}' already configured; returning cached logger "\
+                "and ignoring new settings.",
             stacklevel=2
         )
         return logger
