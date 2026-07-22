@@ -1,68 +1,72 @@
-Here’s the **clean, OS‑independent performance‑boost list** you asked for --- no README framing, just the distilled technical truth.
+Project-specific performance evaluation for grpchook.
 
 ---
 
-## ⚡ **OS‑Independent gRPC Performance Boosts (Windows + macOS + Linux)**
+## 1) Asyncio default event loop (Proactor on Windows)
 
-### **1. Use `grpclib` instead of `grpcio`**
-- Pure asyncio, no threadpool
-- Avoids GIL contention
-- Faster streaming performance
-- Works on all major OSes
-- Biggest single performance win without uvloop
+Status in grpchook: Not applicable today.
 
----
+Reason:
+- grpchook server uses sync grpc.server + ThreadPoolExecutor, not grpc.aio.
+- Event-loop choice does not control current DataChannel runtime path.
 
-### **2. Use asyncio’s default event loop (ProactorEventLoop on Windows)**
-- Not as fast as uvloop, but portable
-- Good enough for high‑throughput streaming
-- Stable and predictable across OSes
+Effort to adopt:
+- High.
+- Requires grpc.aio migration of server stream loop and queue/lock internals.
 
 ---
 
-### **3. Use zero‑copy protobuf techniques**
-- Send pre‑encoded protobuf frames
-- Use `memoryview` slices instead of `bytes`
-- Avoid Python object creation and buffer copies
-- Works identically on Windows, macOS, Linux
-- Can double throughput
+## 2) Zero-copy protobuf techniques
+
+Status in grpchook: Partly valid in principle, not true end-to-end in current API.
+
+Reason:
+- Current stub path serializes/deserializes protobuf Message objects each hop.
+- bytePayload helps avoid Struct overhead, but protobuf framing/parse still happens.
+
+Effort to improve:
+- Medium for partial gains (favor bytePayload, reduce object churn, benchmark).
+- High for true zero-copy end-to-end (transport/serializer redesign).
 
 ---
 
-### **4. Use large streaming chunks (512 KB – 2 MB)**
-- Reduces per‑message overhead
-- Maximizes raw bandwidth
-- Critical for hitting 500–900 MB/s even without uvloop
+## 3) Large streaming chunks (512 KB - 2 MB)
+
+Status in grpchook: Correct direction, workload-dependent target.
+
+Reason:
+- Larger application messages usually improve throughput by amortizing per-message overhead.
+- Exact sweet spot depends on payload type, latency, CPU, compression, and concurrency.
+
+Effort to adopt:
+- Low: expose payload-size guidance and benchmark profiles.
+- Medium: add built-in chunk/reassembly helpers and safer defaults for large messages.
 
 ---
 
-### **5. Use streaming RPC instead of unary**
-- Unary = slow, overhead-heavy
-- Streaming = continuous data flow
-- Essential for high throughput
-- Works the same on all OSes
+## 4) Streaming RPC over unary
+
+Status in grpchook: Correct and already implemented.
+
+Reason:
+- Interface uses one bidirectional stream-stream RPC DataChannel.
+- No unary request path in framework core.
+
+Effort to adopt:
+- None.
 
 ---
 
-### **6. Use multiple processes (not threads)**
-- Bypasses the GIL
-- Scales linearly with CPU cores
-- Identical behavior on Windows, macOS, Linux
-- Lets you reach multi‑GB/s aggregate throughput
+## Chunk size control: gRPC setting or TCP?
 
----
+Short answer: both layers matter, but they control different things.
 
-### **7. Use shared memory for inter‑process communication**
-- `multiprocessing.shared_memory`
-- Zero-copy buffer passing between workers
-- Keeps main project synchronous
-- Fully cross‑platform
+- Application chunk size (what you send per Message): your code controls this.
+- gRPC message limits: configurable via grpc.max_send_message_length and grpc.max_receive_message_length.
+- HTTP/2 frame sizing and write buffering: mostly gRPC C-core internals/options, not direct "best chunk" control.
+- TCP segmentation: handled by OS/network stack; it will split bytes regardless of your app chunk size.
 
----
-
-## 🎯 **The best OS‑independent combo**
-**grpclib + asyncio default loop + zero‑copy protobuf + streaming + multi‑process scaling**
-
-This is the fastest portable architecture you can build in Python today.
-
-If you want, I can turn this into a concrete architecture diagram or show you how to combine these techniques in real code.
+Practical rule:
+- Choose app chunk size by benchmark.
+- Set gRPC max message limits high enough for chosen chunk size.
+- Do not expect TCP layer to pick optimal app-level chunking for you.

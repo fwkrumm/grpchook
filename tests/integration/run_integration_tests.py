@@ -107,6 +107,11 @@ EXAMPLES = [
         "server": ROOT / "compression" / "server_compression.py",
         "client": ROOT / "compression" / "clients_compression.py",
     },
+    {
+        "name": "payload_limits_sweep",
+        "server": None,  # client script orchestrates per-case server subprocesses
+        "client": ROOT / "payload_limits_sweep" / "clients_payload_limits_sweep.py",
+    },
 ]
 
 def _exists(p: Path) -> bool:
