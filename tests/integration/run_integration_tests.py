@@ -54,7 +54,7 @@ EXAMPLES = [
     # --- new examples ---
     {
         "name": "server_off",
-        "server": None,  # no server — client must raise GrpcConnectionError cleanly
+        "server": None,  # no server --- client must raise GrpcConnectionError cleanly
         "client": ROOT / "server_off" / "clients_server_off.py",
     },
     {
@@ -210,7 +210,7 @@ def run_example_pair(server_path: Path, client_path: Path):
         )
         _wait_for_server_startup(server_path, srv, port)
     else:
-        print("(client-only test — no server started)")
+        print("(client-only test --- no server started)")
 
     if not _exists(client_path):
         # usually should not happen
@@ -273,7 +273,7 @@ def run_example_pair(server_path: Path, client_path: Path):
 
     except KeyboardInterrupt:
         # fallback if there is any freeze or early exit desired.
-        print("Keyboard interrupt received — shutting down example processes...")
+        print("Keyboard interrupt received --- shutting down example processes...")
         _terminate(cli, "client")
         _terminate(srv, "server")
         # small pause to allow clean shutdown
@@ -281,7 +281,7 @@ def run_example_pair(server_path: Path, client_path: Path):
 
 
 def main():
-    print("run_examples.py -- sequentially runs bundled examples")
+    print("run_examples.py --- sequentially runs bundled examples")
     for ex in EXAMPLES:
         run_example_pair(ex.get("server"), ex["client"])
 

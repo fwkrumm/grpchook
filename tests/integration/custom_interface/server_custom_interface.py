@@ -1,4 +1,4 @@
-"""Custom-interface integration test — server using a runtime-compiled proto."""
+"""Custom-interface integration test --- server using a runtime-compiled proto."""
 import sys
 from pathlib import Path
 

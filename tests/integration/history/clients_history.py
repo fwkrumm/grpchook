@@ -57,7 +57,7 @@ if __name__ == "__main__":
     expected_transits = 4 * N_ROUNDS
 
     ping.logger.info(
-        "History demo — %d round trips — ping <-> server <-> pong  "
+        "History demo --- %d round trips --- ping <-> server <-> pong  "
         "(expected hops: %d  transits: %d)",
         N_ROUNDS, expected_hops, expected_transits,
     )
