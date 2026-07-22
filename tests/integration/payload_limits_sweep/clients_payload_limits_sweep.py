@@ -32,8 +32,8 @@ from grpchook.tools import generate_message
 from grpchook import message_pb2
 from tests.integration._interface import get_args
 
-MiB = 1024 * 1024
-KiB = 1024
+MIB = 1024 * 1024
+KIB = 1024
 
 STREAM_NAME = "bulk_payload"
 EXIT_NAME = "server-exit"
@@ -60,10 +60,10 @@ class SweepCase:
 
 
 CASES: list[SweepCase] = [
-    SweepCase(max_send_bytes=8 * MiB, max_receive_bytes=8 * MiB, payload_bytes=2 * MiB),
-    SweepCase(max_send_bytes=8 * MiB, max_receive_bytes=32 * MiB, payload_bytes=2 * MiB),
-    SweepCase(max_send_bytes=32 * MiB, max_receive_bytes=8 * MiB, payload_bytes=2 * MiB),
-    SweepCase(max_send_bytes=32 * MiB, max_receive_bytes=32 * MiB, payload_bytes=2 * MiB),
+    SweepCase(max_send_bytes=8 * MIB, max_receive_bytes=8 * MIB, payload_bytes=2 * MIB),
+    SweepCase(max_send_bytes=8 * MIB, max_receive_bytes=32 * MIB, payload_bytes=2 * MIB),
+    SweepCase(max_send_bytes=32 * MIB, max_receive_bytes=8 * MIB, payload_bytes=2 * MIB),
+    SweepCase(max_send_bytes=32 * MIB, max_receive_bytes=32 * MIB, payload_bytes=2 * MIB),
 ]
 
 
@@ -81,16 +81,16 @@ class LimitCheckCase:
 LIMIT_CHECK_CASES: list[LimitCheckCase] = [
     LimitCheckCase(
         label="near_limit_should_pass",
-        max_send_bytes=8 * MiB,
-        max_receive_bytes=8 * MiB,
-        payload_bytes=7 * MiB,
+        max_send_bytes=8 * MIB,
+        max_receive_bytes=8 * MIB,
+        payload_bytes=7 * MIB,
         expect_success=True,
     ),
     LimitCheckCase(
         label="over_limit_should_fail",
-        max_send_bytes=8 * MiB,
-        max_receive_bytes=8 * MiB,
-        payload_bytes=9 * MiB,
+        max_send_bytes=8 * MIB,
+        max_receive_bytes=8 * MIB,
+        payload_bytes=9 * MIB,
         expect_success=False,
     ),
 ]
@@ -217,7 +217,7 @@ class SenderClient(BaseClient):
         )
 
 
-class ReceiverClient(BaseClient):
+class ReceiverClient(BaseClient):  # pylint: disable=too-many-instance-attributes
     """Benchmark receiver client that validates payload and records timings."""
 
     def __init__(
@@ -269,7 +269,7 @@ class RunResult:
 
 
 @dataclass
-class AggregateResult:
+class AggregateResult:  # pylint: disable=too-many-instance-attributes
     max_send_mb: int
     max_receive_mb: int
     payload_kb: int
@@ -317,38 +317,39 @@ def _wait_send_queue_drain(client: BaseClient, timeout_s: float) -> bool:
     return False
 
 
+# pylint: disable=too-many-locals,too-many-branches
 def _run_case_once(
-    case: SweepCase,
+    sweep_case: SweepCase,
     timeout_s: float,
     warmup_messages: int,
-    run_tag: str,
+    run_suffix: str,
 ) -> RunResult:
     """Run one benchmark case once with warmup and timed section."""
     port = _pick_unused_port()
-    server_proc = _start_server(case.max_send_bytes, case.max_receive_bytes, port)
+    server_proc = _start_server(sweep_case.max_send_bytes, sweep_case.max_receive_bytes, port)
 
-    options = _build_client_options(case.max_send_bytes, case.max_receive_bytes)
-    payload = b"X" * case.payload_bytes
+    options = _build_client_options(sweep_case.max_send_bytes, sweep_case.max_receive_bytes)
+    payload = b"X" * sweep_case.payload_bytes
 
     sender = None
     receiver = None
     spin_thread = None
 
     try:
-        case_name = f"s{case.max_send_bytes // MiB}_r{case.max_receive_bytes // MiB}"
-        total_expected = warmup_messages + case.messages
+        case_name = f"s{sweep_case.max_send_bytes // MIB}_r{sweep_case.max_receive_bytes // MIB}"
+        total_expected = warmup_messages + sweep_case.messages
 
         receiver = ReceiverClient(
             port=port,
             options=options,
-            name=f"payload_receiver_{case_name}_{run_tag}",
+            name=f"payload_receiver_{case_name}_{run_suffix}",
             expected_payload=payload,
             expected_messages=total_expected,
         )
         sender = SenderClient(
             port=port,
             options=options,
-            name=f"payload_sender_{case_name}_{run_tag}",
+            name=f"payload_sender_{case_name}_{run_suffix}",
         )
 
         spin_thread = threading.Thread(target=receiver.spin_forever, daemon=True)
@@ -372,7 +373,7 @@ def _run_case_once(
         warmup_history_count = len(receiver.history_e2e_ms)
 
         t0 = time.perf_counter()
-        for _ in range(case.messages):
+        for _ in range(sweep_case.messages):
             sender.send_data(generate_message(STREAM_NAME, byte_payload=payload), add_history=True)
         if not _wait_send_queue_drain(sender, SEND_DRAIN_TIMEOUT_S):
             raise TimeoutError("Sender queue did not drain during timed phase")
@@ -380,30 +381,30 @@ def _run_case_once(
         if not receiver.done.wait(timeout=max(timeout_s, 20.0)):
             raise TimeoutError(
                 f"Receiver got {receiver.received}/{total_expected} messages "
-                f"for send={case.max_send_bytes} recv={case.max_receive_bytes}"
+                f"for send={sweep_case.max_send_bytes} recv={sweep_case.max_receive_bytes}"
             )
         t1 = time.perf_counter()
 
         elapsed_s = t1 - t0
-        total_bytes = case.messages * case.payload_bytes
-        throughput_mbps = total_bytes / (elapsed_s * MiB)
+        total_bytes = sweep_case.messages * sweep_case.payload_bytes
+        throughput_mbps = total_bytes / (elapsed_s * MIB)
 
         timed_history = receiver.history_e2e_ms[
-            warmup_history_count : warmup_history_count + case.messages
+            warmup_history_count : warmup_history_count + sweep_case.messages
         ]
-        if len(timed_history) != case.messages:
+        if len(timed_history) != sweep_case.messages:
             raise RuntimeError(
-                f"Expected {case.messages} timed history points, got {len(timed_history)}"
+                f"Expected {sweep_case.messages} timed history points, got {len(timed_history)}"
             )
 
         history_p50_ms = statistics.median(timed_history)
         history_p95_ms = _p95(timed_history)
 
         return RunResult(
-            max_send_mb=case.max_send_bytes // MiB,
-            max_receive_mb=case.max_receive_bytes // MiB,
-            payload_kb=case.payload_bytes // KiB,
-            messages=case.messages,
+            max_send_mb=sweep_case.max_send_bytes // MIB,
+            max_receive_mb=sweep_case.max_receive_bytes // MIB,
+            payload_kb=sweep_case.payload_bytes // KIB,
+            messages=sweep_case.messages,
             throughput_mbps=throughput_mbps,
             history_p50_ms=history_p50_ms,
             history_p95_ms=history_p95_ms,
@@ -424,13 +425,16 @@ def _run_case_once(
         _stop_server(server_proc)
 
 
-def _run_limit_check(case: LimitCheckCase) -> LimitCheckResult:
+# pylint: enable=too-many-locals,too-many-branches
+
+
+def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint: disable=too-many-branches,too-many-statements
     """Validate one explicit message-size limit behavior case."""
     port = _pick_unused_port()
-    server_proc = _start_server(case.max_send_bytes, case.max_receive_bytes, port)
+    server_proc = _start_server(limit_case.max_send_bytes, limit_case.max_receive_bytes, port)
 
-    options = _build_client_options(case.max_send_bytes, case.max_receive_bytes)
-    payload = b"Y" * case.payload_bytes
+    options = _build_client_options(limit_case.max_send_bytes, limit_case.max_receive_bytes)
+    payload = b"Y" * limit_case.payload_bytes
 
     sender = None
     receiver = None
@@ -439,12 +443,12 @@ def _run_limit_check(case: LimitCheckCase) -> LimitCheckResult:
         sender = SenderClient(
             port=port,
             options=options,
-            name=f"limit_sender_{case.label}",
+            name=f"limit_sender_{limit_case.label}",
         )
         receiver = ReceiverClient(
             port=port,
             options=options,
-            name=f"limit_receiver_{case.label}",
+            name=f"limit_receiver_{limit_case.label}",
             expected_payload=payload,
             expected_messages=1,
         )
@@ -453,7 +457,7 @@ def _run_limit_check(case: LimitCheckCase) -> LimitCheckResult:
         if not _wait_send_queue_drain(sender, SEND_DRAIN_TIMEOUT_S):
             raise TimeoutError("Sender queue did not drain in limit-check phase")
 
-        if case.expect_success:
+        if limit_case.expect_success:
             got = False
             try:
                 data = receiver.get_data(timeout=max(FAIL_CASE_TIMEOUT_S, 8.0))
@@ -462,14 +466,14 @@ def _run_limit_check(case: LimitCheckCase) -> LimitCheckResult:
                 got = False
             if got:
                 return LimitCheckResult(
-                    label=case.label,
+                    label=limit_case.label,
                     expected="pass",
                     outcome="pass",
                     passed=True,
                     detail="message delivered under configured limit",
                 )
             return LimitCheckResult(
-                label=case.label,
+                label=limit_case.label,
                 expected="pass",
                 outcome="fail",
                 passed=False,
@@ -498,13 +502,13 @@ def _run_limit_check(case: LimitCheckCase) -> LimitCheckResult:
             "GrpcConnectionError",
         }
         return LimitCheckResult(
-            label=case.label,
+            label=limit_case.label,
             expected="fail",
             outcome="pass" if passed else "fail",
             passed=passed,
             detail=(
                 f"failure_type={failure_type}, delivered={delivered}, "
-                f"payload_MB={case.payload_bytes / MiB:.1f}"
+                f"payload_MB={limit_case.payload_bytes / MIB:.1f}"
             ),
         )
     finally:
@@ -545,9 +549,9 @@ def _aggregate_results(
 
         aggregated.append(
             AggregateResult(
-                max_send_mb=case.max_send_bytes // MiB,
-                max_receive_mb=case.max_receive_bytes // MiB,
-                payload_kb=case.payload_bytes // KiB,
+                max_send_mb=case.max_send_bytes // MIB,
+                max_receive_mb=case.max_receive_bytes // MIB,
+                payload_kb=case.payload_bytes // KIB,
                 messages=case.messages,
                 repeats=len(runs),
                 throughput_median_mbps=statistics.median(throughput),
@@ -652,53 +656,53 @@ if __name__ == "__main__":
     print(f"Randomization seed: {RANDOM_SEED}")
 
     rng = random.Random(RANDOM_SEED)
-    run_results: dict[tuple[int, int, int, int], list[RunResult]] = {}
+    collected_results: dict[tuple[int, int, int, int], list[RunResult]] = {}
 
     for repeat in range(1, REPEATS + 1):
         run_order = CASES.copy()
         rng.shuffle(run_order)
 
         print(f"\n[repeat {repeat}/{REPEATS}] randomized run order:")
-        for idx, case in enumerate(run_order, start=1):
+        for idx, run_case in enumerate(run_order, start=1):
             print(
                 f"  ({idx}/{len(run_order)}) "
-                f"send={case.max_send_bytes // MiB}MB "
-                f"recv={case.max_receive_bytes // MiB}MB "
-                f"payload={case.payload_bytes // KiB}KB "
-                f"timed_messages={case.messages}"
+                f"send={run_case.max_send_bytes // MIB}MB "
+                f"recv={run_case.max_receive_bytes // MIB}MB "
+                f"payload={run_case.payload_bytes // KIB}KB "
+                f"timed_messages={run_case.messages}"
             )
 
-            run_tag = f"rep{repeat}_ord{idx}"
+            case_run_suffix = f"rep{repeat}_ord{idx}"
             result = _run_case_once(
-                case,
+                run_case,
                 timeout_s=args.timeout,
                 warmup_messages=WARMUP_MESSAGES,
-                run_tag=run_tag,
+                run_suffix=case_run_suffix,
             )
 
-            key = (
-                case.max_send_bytes,
-                case.max_receive_bytes,
-                case.payload_bytes,
-                case.messages,
+            case_key = (
+                run_case.max_send_bytes,
+                run_case.max_receive_bytes,
+                run_case.payload_bytes,
+                run_case.messages,
             )
-            run_results.setdefault(key, []).append(result)
+            collected_results.setdefault(case_key, []).append(result)
 
-    aggregated = _aggregate_results(CASES, run_results)
+    aggregate_results = _aggregate_results(CASES, collected_results)
 
     limit_results: list[LimitCheckResult] = []
     print("\nRunning explicit limit-enforcement checks:")
-    for limit_case in LIMIT_CHECK_CASES:
+    for limit_check_case in LIMIT_CHECK_CASES:
         print(
-            f"- {limit_case.label}: send={limit_case.max_send_bytes // MiB}MB "
-            f"recv={limit_case.max_receive_bytes // MiB}MB "
-            f"payload={limit_case.payload_bytes // MiB:.1f}MB"
+            f"- {limit_check_case.label}: send={limit_check_case.max_send_bytes // MIB}MB "
+            f"recv={limit_check_case.max_receive_bytes // MIB}MB "
+            f"payload={limit_check_case.payload_bytes / MIB:.1f}MB"
         )
-        limit_results.append(_run_limit_check(limit_case))
+        limit_results.append(_run_limit_check(limit_check_case))
 
     print("\nPayload-limit sweep summary (loopback, relative metrics):")
     _print_metric_legend()
-    print(_format_aggregate_table(aggregated))
+    print(_format_aggregate_table(aggregate_results))
 
     print("\nLimit enforcement checks:")
     print(_format_limit_check_table(limit_results))

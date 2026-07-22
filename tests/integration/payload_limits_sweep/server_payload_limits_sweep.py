@@ -10,7 +10,10 @@ from grpchook.baseserver import ServerConfig
 from tests.integration._server_base import IntegrationServer
 
 
-def _build_server_options(max_send_bytes: int, max_receive_bytes: int) -> list[tuple[str, int | bool]]:
+def _build_server_options(
+    max_send_bytes: int,
+    max_receive_bytes: int,
+) -> list[tuple[str, int | bool]]:
     """Return default server options extended with explicit message-size caps."""
     options = list(ServerConfig().server_options)
     options.extend([
@@ -31,6 +34,7 @@ class PayloadLimitServer(IntegrationServer):
 
 
 def _parse_args() -> argparse.Namespace:
+    """Parse CLI args for server port and message-size limits."""
     parser = argparse.ArgumentParser(description="Payload-limit sweep -- server")
     parser.add_argument("--port", type=int, required=True, help="Server port")
     parser.add_argument(
