@@ -4,7 +4,7 @@ Unit tests for baseclasses/BaseClient.py
 BaseClient.__init__ always calls self.run(), which opens a real gRPC channel.
 To keep tests pure-unit (no network), run() is patched to a no-op.  All
 gRPC-facing setup (channel, stub) that happens before run() is lazy and does
-not cause I/O — so only the patched run() call needs suppressing.
+not cause I/O --- so only the patched run() call needs suppressing.
 
 Covered:
 - send_data: type guard, provides-list guard, happy-path enqueue.
@@ -31,7 +31,7 @@ from grpchook.exceptions import ClientExit, GrpcValueError
 # ---------------------------------------------------------------------------
 
 def _client(provides=None, requires=None) -> BaseClient:
-    """Return a BaseClient with run() suppressed — no network required."""
+    """Return a BaseClient with run() suppressed --- no network required."""
     with patch.object(BaseClient, "run", lambda self: None):
         c = BaseClient(
             name="test",
@@ -162,7 +162,7 @@ class TestDisconnect(unittest.TestCase):
         self.client.stream = mock_stream
         self.client.disconnect()
         call_count = mock_stream.cancel.call_count
-        self.client.disconnect()  # second call — run_event already cleared
+        self.client.disconnect()  # second call --- run_event already cleared
         self.assertEqual(mock_stream.cancel.call_count, call_count)
 
 

@@ -3,14 +3,14 @@
 ## The core constraint
 
 `BaseServer` uses a `ThreadPoolExecutor`. Each connected client occupies **one thread for its
-entire connection lifetime** — the `DataChannel` generator holds the thread until the client
+entire connection lifetime** --- the `DataChannel` generator holds the thread until the client
 disconnects. Additionally, `_handle_client_receive` spawns a second daemon thread per client.
 
 $$\text{threads} = \text{clients} \times 2$$
 
 The default `ServerConfig(max_workers=None)` resolves to `min(32, os.cpu_count() + 4)`.
 On a typical 8-core machine: **12 workers = hard cap of 12 simultaneous clients**.
-The 13th client does not get refused — it silently stalls at `_check_connection()` and times
+The 13th client does not get refused --- it silently stalls at `_check_connection()` and times
 out after `connection_check_timeout` (default 5 s) with a `GrpcConnectionError`. No server-side
 warning is emitted.
 
@@ -29,13 +29,13 @@ The real cost is **memory** (stack) and **OS scheduler slots**.
 
 | Platform | Default stack/thread | 1000 clients (×2 threads) |
 |---|---|---|
-| Linux (default) | 8 MB | ~16 GB — not viable |
-| Linux (`ulimit -s 256`) | 256 KB | ~500 MB — acceptable |
-| Windows | ~1 MB | ~2 GB — marginal |
-| Windows (reduced) | ~256 KB | ~500 MB — acceptable |
+| Linux (default) | 8 MB | ~16 GB --- not viable |
+| Linux (`ulimit -s 256`) | 256 KB | ~500 MB --- acceptable |
+| Windows | ~1 MB | ~2 GB --- marginal |
+| Windows (reduced) | ~256 KB | ~500 MB --- acceptable |
 
 **Correction:** the previous `ulimit -s 64` (64 KB) recommendation is risky for CPython.
-The C stack backs interpreter recursion, exception handling, and calls into gRPC's C core —
+The C stack backs interpreter recursion, exception handling, and calls into gRPC's C core ---
 64 KB can trigger stack-overflow crashes (segfault, not a catchable Python exception) under
 deeper call chains, e.g. logging formatting, nested exception handling, or gRPC callbacks.
 Use **256 KB** as a tested floor and validate under the app's actual worst-case call depth
@@ -61,17 +61,17 @@ ulimit -s 256   # 256 KB stack; set in the launch script or systemd unit
 
 ## Path to `grpc.aio` (500–5000 clients)
 
-`grpcio` ships `grpc.aio` — same library, no new dependency. The servicer becomes an async
+`grpcio` ships `grpc.aio` --- same library, no new dependency. The servicer becomes an async
 coroutine; concurrent streams share one event loop instead of one thread each. The exact
 number of OS threads used internally depends on the async gRPC C-core executor and is not a
-fixed "2–4" — treat that as "a small, roughly constant number" rather than a guaranteed count,
+fixed "2–4" --- treat that as "a small, roughly constant number" rather than a guaranteed count,
 and verify via profiling for the target deployment.
 
 User-facing hook signatures stay **synchronous**. Sync hooks are dispatched via
 `asyncio.to_thread()` so user subclasses require no changes:
 
 ```python
-# server side — internal change only
+# server side --- internal change only
 async def DataChannel(self, request_iterator, context):
     # Incoming side: dispatch each request to a worker thread so sync hooks don't
     # block the event loop.
@@ -91,11 +91,11 @@ Required internal changes:
 - `BaseServer.serve_forever()`: `grpc.server(...)` → `grpc.aio.server(...)`
 - `BaseServer.DataChannel`: `def` → `async def`, split into a concurrent receive task and
   send task (the current single-generator structure that both reads `request_iterator` and
-  yields from `notification_queue` cannot be ported as-is — see caveat above)
-- `BaseClient` is unaffected — it runs in its own process/thread already
+  yields from `notification_queue` cannot be ported as-is --- see caveat above)
+- `BaseClient` is unaffected --- it runs in its own process/thread already
 
 `BaseClient` does **not** need to change for the `grpc.aio` server migration. This migration
-is a genuine rewrite of the streaming loop, not a mechanical `def`→`async def` swap — scope
+is a genuine rewrite of the streaming loop, not a mechanical `def`→`async def` swap --- scope
 the effort accordingly.
 
 ---
@@ -104,5 +104,5 @@ the effort accordingly.
 
 `grpclib` is a third-party pure-Python asyncio gRPC implementation (no C core).
 It requires the same asyncio migration as `grpc.aio` but loses the C-core performance
-advantage of `grpcio`. Not recommended — `grpc.aio` gives asyncio scalability with
+advantage of `grpcio`. Not recommended --- `grpc.aio` gives asyncio scalability with
 the same C-core throughput.

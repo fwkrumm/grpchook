@@ -1,4 +1,4 @@
-# HOW_TO.md — Developer API Reference
+# HOW_TO.md --- Developer API Reference
 
 ## Core Concept
 
@@ -177,7 +177,7 @@ config = ClientConfig(
 BaseClient(..., config=config)
 ```
 
-Example — injecting an auth token without subclassing:
+Example --- injecting an auth token without subclassing:
 
 ```python
 client = MyClient(port=50051, config=ClientConfig(
@@ -200,7 +200,7 @@ client = MyClient(port=50051, config=ClientConfig(
 
 ## Custom Interface (Runtime Proto)
 
-Use a custom `.proto` instead of the bundled one — without modifying `grpchook/`.
+Use a custom `.proto` instead of the bundled one --- without modifying `grpchook/`.
 The proto must define the same message/service structure (`Message`, `ClientProvides`, `ServerProvides`, `StreamStub`, `StreamServicer`).
 
 ### Compile and register at startup
@@ -245,7 +245,7 @@ compile_and_register(
 `server.py` / `client.py`:
 
 ```python
-import _proto_setup  # must be first — registers custom proto before grpchook imports
+import _proto_setup  # must be first --- registers custom proto before grpchook imports
 from grpchook.baseserver import BaseServer
 ```
 

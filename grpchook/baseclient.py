@@ -144,7 +144,7 @@ class BaseClient:  # pylint: disable=too-many-instance-attributes
         self.send_queue = queue.Queue()
         self.receive_queue = queue.Queue(maxsize=self._config.receive_queue_maxsize)
         self.server_session_id = ""
-        self.uuid = str(uuid.uuid4())  # new UUID per connection — avoids DataRegister race
+        self.uuid = str(uuid.uuid4())  # new UUID per connection --- avoids DataRegister race
         self.run_event.set()  # set BEFORE receive thread so that the latter starts
 
         # start connection and receive thread
@@ -473,7 +473,7 @@ class BaseClient:  # pylint: disable=too-many-instance-attributes
         """
         Get a response from the receive queue.
 
-        Never blocks permanently — polls in 1-second slices so that the run
+        Never blocks permanently --- polls in 1-second slices so that the run
         event is checked on every iteration and Ctrl+C (KeyboardInterrupt) is
         always handled promptly.
 
