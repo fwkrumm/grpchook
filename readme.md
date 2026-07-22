@@ -9,6 +9,7 @@
 > **Status: Work in Progress.**
 > The project is open source and will remain open source.
 > Treat with caution. If you depend on it, **pin your version**.
+> Semantic versioning will only begin with the first official release, starting at version **1.0.0**.
 
 ---
 
@@ -421,3 +422,4 @@ BSD 3-Clause --- see [LICENSE.txt](LICENSE.txt).
 | 0.0.4                      | Add executor for server and wait for shutdown. |
 | 0.0.5                      | Fix readme on pypi page. |
 | 0.0.6                      | Update how-to markdown to include custom interface description. |
+| 0.0.7                      | Minor performance adjustments, adding compression parameter, changing logging parameters. |
