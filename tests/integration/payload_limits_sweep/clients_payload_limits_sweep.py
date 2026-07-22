@@ -454,10 +454,18 @@ def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint:
         )
 
         sender.send_data(generate_message(STREAM_NAME, byte_payload=payload), add_history=True)
-        if not _wait_send_queue_drain(sender, SEND_DRAIN_TIMEOUT_S):
-            raise TimeoutError("Sender queue did not drain in limit-check phase")
+        queue_drained = _wait_send_queue_drain(sender, SEND_DRAIN_TIMEOUT_S)
 
         if limit_case.expect_success:
+            if not queue_drained:
+                return LimitCheckResult(
+                    label=limit_case.label,
+                    expected="pass",
+                    outcome="fail",
+                    passed=False,
+                    detail="sender queue did not drain before timeout",
+                )
+
             got = False
             try:
                 data = receiver.get_data(timeout=max(FAIL_CASE_TIMEOUT_S, 8.0))
@@ -479,16 +487,17 @@ def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint:
                 passed=False,
                 detail="message not delivered before timeout",
             )
-        failure_type = ""
-        try:
-            sender.get_data(timeout=FAIL_CASE_TIMEOUT_S)
-            failure_type = "none"
-        except GrpcResourceExhaustedError:
-            failure_type = "GrpcResourceExhaustedError"
-        except GrpcConnectionError:
-            failure_type = "GrpcConnectionError"
-        except (GrpcEmpty, ClientExit):
-            failure_type = "no-explicit-limit-error"
+        failure_type = "send-queue-not-drained"
+        if queue_drained:
+            try:
+                sender.get_data(timeout=FAIL_CASE_TIMEOUT_S)
+                failure_type = "none"
+            except GrpcResourceExhaustedError:
+                failure_type = "GrpcResourceExhaustedError"
+            except GrpcConnectionError:
+                failure_type = "GrpcConnectionError"
+            except (GrpcEmpty, ClientExit):
+                failure_type = "no-explicit-limit-error"
 
         delivered = False
         try:
@@ -497,10 +506,7 @@ def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint:
         except (GrpcResourceExhaustedError, GrpcConnectionError, GrpcEmpty, ClientExit):
             delivered = False
 
-        passed = (not delivered) and failure_type in {
-            "GrpcResourceExhaustedError",
-            "GrpcConnectionError",
-        }
+        passed = (not delivered) and failure_type != "none"
         return LimitCheckResult(
             label=limit_case.label,
             expected="fail",
