@@ -3,6 +3,7 @@ __pycache__
 .venv/*
 .coverage
 uv.lock
+.lurus
 
 # Generated protobuf files — regenerated at build/CI time
 grpchook/message_pb2.py

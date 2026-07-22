@@ -61,6 +61,12 @@ class ClientConfig:
     # extra/extend (key, value) metadata tuples appended to every gRPC stream call;
     # the schema-version entry is always prepended automatically
     ext_metadata: list = field(default_factory=list)
+    # gRPC compression algorithm applied to client-sent messages.
+    # Must be enabled on BOTH server and client to compress both directions.
+    # If only the client sets this, only client->server messages are compressed;
+    # server->client messages remain uncompressed (no error, just partial compression).
+    # Example: grpc.Compression.Gzip
+    compression: grpc.Compression = None
     grpc_options: list = field(default_factory=lambda: [
         ("grpc.keepalive_time_ms", 180000),  # 3 minutes
         ("grpc.keepalive_timeout_ms", 10000),  # 10 seconds
@@ -186,7 +192,8 @@ class BaseClient:  # pylint: disable=too-many-instance-attributes
 
         self.stream = self.stub.DataChannel(
             self._request_generator(),
-            metadata=[(SCHEMA_VERSION_METADATA_KEY, SCHEMA_VERSION)] + self._config.ext_metadata
+            metadata=[(SCHEMA_VERSION_METADATA_KEY, SCHEMA_VERSION)] + self._config.ext_metadata,
+            compression=self._config.compression,
         )
 
         # send welcome message to server and exchange uuid, requires and provides lists
@@ -266,7 +273,7 @@ class BaseClient:  # pylint: disable=too-many-instance-attributes
         while self.run_event.is_set():
             try:
                 data: message_pb2.Message = self.send_queue.get(timeout=1)
-                self.logger.idebug("Sending message to server: %s", data)
+                self.logger.idebug("Sending message to server: %s", data.metaInfo)
                 if data.history:
                     # if there is a history extend it
                     data.history[-1].perfCounter = (

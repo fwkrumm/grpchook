@@ -349,10 +349,21 @@ with client:
 
 ## Logging
 
+If your class inherits from `BaseServer` or `BaseClient`, prefer the built-in instance logger:
+
+```python
+class MyServer(BaseServer):
+    def on_receive(self, peer, request):
+        self.logger.info("received %s", request.metaInfo.messageName)
+        return True
+```
+
+Use `get_logger(...)` mainly in static methods or helper modules where `self` is not available:
+
 ```python
 from grpchook.logger import get_logger
 logger = get_logger(name="MyComponent")   # returns GrpcLogger
 logger.setLevel("DEBUG")   # syncs console + file handler; use "INFO" by default
 ```
 
-Default console level: `INFO`. File logs at `INTERNAL_DEBUG` (level 5) written to `%TEMP%/grpcLogs/<name>_YYYYMMDD.log`.
+Default console level: `INFO`. File logs by default at `INTERNAL_DEBUG` (level 5) written to `%TEMP%/grpcLogs/<name>_YYYYMMDD.log`.
