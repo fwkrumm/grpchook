@@ -281,7 +281,7 @@ def run_example_pair(server_path: Path, client_path: Path):
 
 
 def main():
-    print("run_examples.py — sequentially runs bundled examples")
+    print("run_examples.py -- sequentially runs bundled examples")
     for ex in EXAMPLES:
         run_example_pair(ex.get("server"), ex["client"])
 
