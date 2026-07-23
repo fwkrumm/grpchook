@@ -40,7 +40,7 @@
 
 ## Disclaimer
 
-Core concept by a human developer. AI was used to assist with unit and integration tests, examples, documentation, and selected code sections. Core logic has been reviewed by a human; the test suite has not been fully audited --- there may be AI-introduced oversights. Please report any issues you find.
+Core architecture and design were created by a human developer. AI was used extensively for unit and integration test creation, examples, documentation, refinements, and selected code sections. Core logic was human-reviewed, but the full test suite has not been fully audited --- AI-introduced oversights may still exist. Please report any issues you find.
 
 This software is provided **"as is"**, without warranty of any kind. The developer is not responsible for any damage, data loss, security vulnerabilities, or other issues that may arise from using this software. **You use it at your own risk.** See [LICENSE.txt](LICENSE.txt) for the full BSD 3-Clause terms.
 
