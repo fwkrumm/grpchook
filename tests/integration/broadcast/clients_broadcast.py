@@ -58,7 +58,17 @@ if __name__ == "__main__":
                 data = client.get_data(timeout=TIMEOUT)
             except GrpcEmpty:
                 break
-            counter = int(data.payload.bytePayload.decode())
+
+            # Connection welcome/metadata messages can arrive on this queue.
+            # Only count actual broadcast payload frames.
+            if data.metaInfo.messageName != "broadcast":
+                continue
+
+            payload_text = data.payload.bytePayload.decode().strip()
+            if not payload_text:
+                continue
+
+            counter = int(payload_text)
             received[client.name].append(counter)
 
     # assertions
