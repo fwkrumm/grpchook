@@ -284,9 +284,9 @@ class AggregateResult:  # pylint: disable=too-many-instance-attributes
 @dataclass
 class LimitCheckResult:
     label: str
-    expected: str
-    outcome: str
-    passed: bool
+    expected_behavior: str
+    observed_behavior: str
+    assertion_passed: bool
     detail: str
 
 
@@ -460,9 +460,9 @@ def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint:
             if not queue_drained:
                 return LimitCheckResult(
                     label=limit_case.label,
-                    expected="pass",
-                    outcome="fail",
-                    passed=False,
+                    expected_behavior="accept",
+                    observed_behavior="blocked",
+                    assertion_passed=False,
                     detail="sender queue did not drain before timeout",
                 )
 
@@ -475,16 +475,16 @@ def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint:
             if got:
                 return LimitCheckResult(
                     label=limit_case.label,
-                    expected="pass",
-                    outcome="pass",
-                    passed=True,
+                    expected_behavior="accept",
+                    observed_behavior="accept",
+                    assertion_passed=True,
                     detail="message delivered under configured limit",
                 )
             return LimitCheckResult(
                 label=limit_case.label,
-                expected="pass",
-                outcome="fail",
-                passed=False,
+                expected_behavior="accept",
+                observed_behavior="blocked",
+                assertion_passed=False,
                 detail="message not delivered before timeout",
             )
         failure_type = "send-queue-not-drained"
@@ -507,11 +507,12 @@ def _run_limit_check(limit_case: LimitCheckCase) -> LimitCheckResult:  # pylint:
             delivered = False
 
         passed = (not delivered) and failure_type != "none"
+        observed_behavior = "blocked" if not delivered else "accept"
         return LimitCheckResult(
             label=limit_case.label,
-            expected="fail",
-            outcome="pass" if passed else "fail",
-            passed=passed,
+            expected_behavior="blocked",
+            observed_behavior=observed_behavior,
+            assertion_passed=passed,
             detail=(
                 f"failure_type={failure_type}, delivered={delivered}, "
                 f"payload_MB={limit_case.payload_bytes / MIB:.1f}"
@@ -614,13 +615,19 @@ def _format_aggregate_table(results: list[AggregateResult]) -> str:
 
 def _format_limit_check_table(results: list[LimitCheckResult]) -> str:
     """Render explicit limit-behavior checks as fixed-width text table."""
-    headers = ["case", "expected", "outcome", "passed", "detail"]
+    headers = [
+        "case",
+        "expected_behavior",
+        "observed_behavior",
+        "assertion_passed",
+        "detail",
+    ]
     rows = [
         [
             r.label,
-            r.expected,
-            r.outcome,
-            "yes" if r.passed else "no",
+            r.expected_behavior,
+            r.observed_behavior,
+            "yes" if r.assertion_passed else "no",
             r.detail,
         ]
         for r in results
@@ -713,7 +720,7 @@ if __name__ == "__main__":
     print("\nLimit enforcement checks:")
     print(_format_limit_check_table(limit_results))
 
-    failed_checks = [r for r in limit_results if not r.passed]
+    failed_checks = [r for r in limit_results if not r.assertion_passed]
     if failed_checks:
         raise SystemExit(
             "Limit enforcement check failed: "
